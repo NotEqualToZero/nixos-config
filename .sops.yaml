@@ -2,6 +2,8 @@ keys:
   - &admin_Hades age1p90f0v3edg8urrk356f8mx47n23xda8yl2xwjqzevpdkq23t6dkstqzdmj
   - &host_Mnemosyne age1paagl4g4tf6r6qu0rj5a3rthy4h69vt0enhk87l5vgvd2g8savmsva0pay
   - &host_Hades age1w0fdmrmgu26ez60cpra67jyu2ckcjj9z2sj77rzlguupvkyq0dwqmycyrl
+  - &host_NAS age19zdxtccg3z0psznlcj3mqa40gz50g0z6xfhfj9892488yy20df9qv0us28
+
 creation_rules:
   - path_regex: secrets/[^/]+\.(yaml|json|env|ini)$
     key_groups:
@@ -9,3 +11,4 @@ creation_rules:
       - *admin_Hades
       - *host_Mnemosyne
       - *host_Hades
+      - *host_NAS

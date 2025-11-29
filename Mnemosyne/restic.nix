@@ -2,27 +2,10 @@
 {
   imports = [];
 
-  services = {
-    samba = {
-      enable = true;
-      openFirewall = true;
-      securityType = "user";
-      shares.admin = {
-        path = "/storage";
-        writable = "yes";
-        browsable = "yes";
-      };
-      shares.global = {
-        "server min protocol" = "SMB2_02";
-      };
-    };
+  environment.systemPackages = [ pkgs.restic ];
 
-    avahi.enable = true;
-    samba-wsdd = {
-      enable = true;
-      openFirewall = true;
-    };
-
+  services.restic.backups.paperless = {
+    initialize = true;
 
   };
 

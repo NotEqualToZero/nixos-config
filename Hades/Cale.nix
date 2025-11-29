@@ -41,6 +41,7 @@ sops.secrets.cale_passwd = {};
 nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
   "1password-gui"
   "1password"
+  "mqtt-explorer"
 ];
 # Alternatively, you could also just allow all unfree packages
 # nixpkgs.config.allowUnfree = true;
@@ -57,16 +58,5 @@ boot.initrd = {
   supportedFilesystems = [ "nfs" ];
   kernelModules = [ "nfs" ];
 };
-fileSystems."/mnt/redundant" = {
-  options = [ "x-systemd.automount" "noauto" ];
-  device = "10.162.69.45:/mnt/tank/redundant";
-  fsType = "nfs";
-};
-fileSystems."/mnt/risky" = {
-  options = [ "x-systemd.automount" "noauto" ];
-  device = "10.162.69.45:/mnt/trough/risky";
-  fsType = "nfs";
-};
-
 
 }

@@ -12,10 +12,25 @@
       (sources.sops-nix + "/modules/sops")
       ./mergerfs.nix
       ./samba.nix
+      #./paperless.nix
+      ./homeAssistant.nix
     ];
 
   sops.secrets.garagefs_rpc_secret = {};
   sops.age.sshKeyPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
+
+  users.groups."paperless" = {};
+  users.users."paperless" = {
+    group = "paperless";
+    isSystemUser = true;
+  };
+
+
+  fileSystems."/mnt/redundant" = {
+    options = [ "x-systemd.automount" "noauto" ];
+    device = "10.162.69.45:/mnt/tank/redundant";
+    fsType = "nfs";
+  };
 
 
   #services.garage = {
@@ -39,7 +54,7 @@
   #  };
   #};
 
-  boot.supportedFilesystems = [ "xfs" ];
+  boot.supportedFilesystems = [ "xfs" "nfs" ];
 
 
   fileSystems."/mnt/xfs1" = {

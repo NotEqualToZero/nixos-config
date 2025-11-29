@@ -10,6 +10,8 @@ in {
     nixpkgs = import sources.nixpkgs; #npins default nixpkgs currently 25.05 11/09/25
     nodeNixpkgs = {
       Hades = import sources.pkgs-uns;
+      NAS = import sources.pkgs-uns;
+      Heracles = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
 
@@ -63,6 +65,43 @@ in {
     deployment = {
       #buildOnTarget = true;
       targetHost = "10.162.69.56";
+      targetUser = "admin";
+    };
+  };
+
+  NAS = { name, nodes, ... }: {
+    imports = [
+      ./NAS/configuration.nix
+    ];
+
+    deployment = {
+      #buildOnTarget = true;
+      targetHost = "nas";
+      targetUser = "admin";
+    };
+  };
+
+  Paperless = { name, nodes, ... }: {
+    imports = [
+      ./template/proxmox-lxc.nix
+      ./nixos/paperless.nix
+    ];
+
+    deployment = {
+      buildOnTarget = true;
+      targetHost = "10.162.69.85";
+      targetUser = "admin";
+    };
+  };
+
+  Heracles = { name, nodes, ... }: {
+    imports = [
+      ./Heracles/configuration.nix
+    ];
+
+    deployment = {
+      buildOnTarget = true;
+      targetHost = "10.162.69.45";
       targetUser = "admin";
     };
   };
