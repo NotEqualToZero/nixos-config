@@ -7,10 +7,10 @@ in {
     # - A path to a Nixpkgs checkout
     # - The Nixpkgs lambda (e.g., import <nixpkgs>)
     # - An initialized Nixpkgs attribute set
-    nixpkgs = import sources.nixpkgs; #npins default nixpkgs currently 25.05 11/09/25
+    nixpkgs = import sources."25.05"; #npins default nixpkgs currently 25.05 11/09/25
     nodeNixpkgs = {
       Hades = import sources.pkgs-uns;
-      NAS = import sources.pkgs-uns;
+      NAS = import sources."25.11";
       Heracles = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
@@ -89,7 +89,7 @@ in {
 
     deployment = {
       buildOnTarget = true;
-      targetHost = "10.162.69.85";
+      targetHost = "10.162.69.206";
       targetUser = "admin";
     };
   };
@@ -100,8 +100,19 @@ in {
     ];
 
     deployment = {
-      buildOnTarget = true;
-      targetHost = "10.162.69.45";
+      # buildOnTarget = true;
+      targetHost = "10.162.69.121";
+      targetUser = "admin";
+    };
+  };
+  Lighthouse = { name, nodes, ... }: {
+    imports = [
+      ./Hetzner/configuration.nix
+    ];
+
+    deployment = {
+      # buildOnTarget = true;
+      targetHost = "65.109.133.186";
       targetUser = "admin";
     };
   };

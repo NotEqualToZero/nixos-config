@@ -41,14 +41,19 @@
     #guiAddress = "0.0.0.0:8385";
     settings = {
       devices = {
-        "paperless" = { id = "P2MPFM2-RWPLO3C-KQVSLZJ-NGD7D6L-LEZDOMG-MK674XU-EHFPL2W-72TC2A6"; };
+        "NAS" = { id = "P2MPFM2-RWPLO3C-KQVSLZJ-NGD7D6L-LEZDOMG-MK674XU-EHFPL2W-72TC2A6"; };
+        "Hades" = { id = "3SY4S6G-5JWNCCW-RP5LBLX-OKDHU22-RUX3DSR-PXVNAQC-UZ4DHOS-CBCTBQU"; };
       };
       folders = {
         "paperless" = {
           path = "/var/lib/paperless";
-          devices = [ "paperless"];
-          #type = "sendonly";
+          devices = [ "NAS"];
+          type = "sendonly";
           id = "zofgl-49s4j";
+        };
+        "consume" = {
+          path = "/var/lib/paperless/consume";
+          devices = [ "Hades"];
         };
       };
     };

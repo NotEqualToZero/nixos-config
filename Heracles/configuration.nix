@@ -8,14 +8,15 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      (sources.sops-nix + "/modules/sops")
-      ../nixos/secrets.nix
+      #(sources.sops-nix + "/modules/sops")
+      #../nixos/secrets.nix
     ];
 
-  sops.secrets = {
-    factorio_user = {};
-    factorio_key = {};
-  };
+  #sops.secrets = {
+  #  factorio_user = {};
+  #  factorio_key = {};
+  #};
+
 
 
   users.users.admin = {
@@ -58,6 +59,33 @@
     remotePlay.openFirewall = true; # Open ports in the firewall for Steam Remote Play
     dedicatedServer.openFirewall = true; # Open ports in the firewall for Source Dedicated Server
   };
+
+  services.monado = {
+    enable = true;
+    defaultRuntime = true;
+    highPriority = true;
+  };
+  systemd.user.services.monado.environment = {
+    STEAMVR_LH_ENABLE = "1";
+    XRT_COMPOSITOR_COMPUTE = "1";
+  };
+
+  programs.envision = {
+    enable = true;
+    openFirewall = true;
+  };
+
+  programs.git = {
+    enable = true;
+    lfs.enable = true;
+  };
+
+#  boot.kernelPatches = [
+#    {
+#      name = "amdgpu-ignore-ctx-privileges";
+#      patch = ./cap_sys_nice_begone.mypatch;
+#    }
+#  ];
 
   programs.gamemode.enable = true;
 
@@ -162,13 +190,18 @@
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
-    protonup
+    protonup-ng
     lutris
     heroic
+    monado
     discord
     prismlauncher
-    factorio
   ];
+
+  hardware.bluetooth.enable = true;
+  hardware.pulseaudio.package = pkgs.pulseaudioFull;
+
+
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.

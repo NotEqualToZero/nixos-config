@@ -4,6 +4,13 @@ imports = [
   (sources.sops-nix + "/modules/sops")
 ];
 
+programs.steam = {
+  enable = true;
+  extraCompatPackages = with pkgs; [
+    proton-ge-bin
+  ];
+};
+
 users.users.cale = {
   isNormalUser = true;
   description = "Cale";
@@ -30,18 +37,46 @@ users.users.cale = {
     colmena
     sops
     git
+    emacs
+    vim
+    ripgrep
+    coreutils
+    fd
+    libvterm
+    libtool
+    clang
+    nixfmt
+    shellcheck
+    pandoc
+    cmake
+    gnumake
+    syncthing
+    pantum-driver
+    libreoffice-qt-still
     ];
 };
 
+services.avahi = {
+  enable = true;
+  nssmdns = true;
+  openFirewall = true;
+};
+
+
 services.tailscale.enable = true;
 
-sops.secrets.cale_passwd = {};
+sops.secrets = {
+  cale_passwd = {};
+  syncthing-key = {};
+  syncthing-cert = {};
+};
 
 
 nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
   "1password-gui"
   "1password"
-  "mqtt-explorer"
+  "steam"
+  "steam-unwrapped"
 ];
 # Alternatively, you could also just allow all unfree packages
 # nixpkgs.config.allowUnfree = true;
@@ -59,4 +94,24 @@ boot.initrd = {
   kernelModules = [ "nfs" ];
 };
 
+services.syncthing = {
+  enable = true;
+  dataDir = "/home/cale/Syncthing/";
+  user = "cale";
+  key = config.sops.secrets.syncthing-key.path;
+  cert = config.sops.secrets.syncthing-cert.path;
+  openDefaultPorts = true;
+  systemService = true;
+  guiAddress = "0.0.0.0:8385";
+  settings = {
+    folders = {
+      "paperless-Consume" = {
+        path = "/home/cale/Documents/Paperless-Consume";
+        #devices = [ "paperless"];
+        #type = "sendonly";
+        #id = "zofgl-49s4j";
+      };
+    };
+  };
+};
 }

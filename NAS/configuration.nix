@@ -130,6 +130,7 @@
     ssh-to-age
     nfs-utils
     restic
+    ranger
   ];
 
   services.restic.backups = {
