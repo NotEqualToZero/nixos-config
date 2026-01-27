@@ -2,7 +2,7 @@
 {
   imports = [
     ./configuration.nix
-    ./Cale.nix
+    ./Hades2.nix
     (sources.nixos-hardware + "/dell/latitude/7390")
   ];
   hardware.bluetooth.enable = true; # enables support for Bluetooth

@@ -7,10 +7,9 @@ in {
     # - A path to a Nixpkgs checkout
     # - The Nixpkgs lambda (e.g., import <nixpkgs>)
     # - An initialized Nixpkgs attribute set
-    nixpkgs = import sources."25.05"; #npins default nixpkgs currently 25.05 11/09/25
+    nixpkgs = import sources."25.11"; #npins default nixpkgs currently 25.05 11/09/25
     nodeNixpkgs = {
       Hades = import sources.pkgs-uns;
-      NAS = import sources."25.11";
       Heracles = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
@@ -88,7 +87,7 @@ in {
     ];
 
     deployment = {
-      buildOnTarget = true;
+      #buildOnTarget = true;
       targetHost = "10.162.69.206";
       targetUser = "admin";
     };

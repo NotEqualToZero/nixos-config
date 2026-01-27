@@ -1,6 +1,25 @@
 { config, lib, pkgs, sources, ... }:
-{
-  imports = [];
+let
+  quiet = import ../secrets/quiet.nix;
+in {
+  imports = [
+  ];
+
+  sops.secrets = {
+    sync-key = {
+      format = "binary";
+      sopsFile = ../secrets/paperless-sync-key.pem;
+      owner = "paperless";
+    };
+    sync-cert = {
+      format = "binary";
+      sopsFile = ../secrets/paperless-sync-cert.pem;
+      owner = "paperless";
+    };
+  };
+
+
+
 
   networking.hostName = "PaperNix";
 
@@ -22,7 +41,10 @@
     };
   };
 
-  networking.firewall.interfaces."eth0".allowedTCPPorts = [ 80 443 58080];
+  networking.firewall.interfaces."eth0" = {
+    allowedTCPPorts = [ 80 443 58080 22000 ];
+    allowedUDPPorts = [ 22000 ];
+  };
 
   users.users.paperless = {
     extraGroups = [ "syncthing" ];
@@ -37,12 +59,14 @@
     group = "paperless";
     openDefaultPorts = true;
     systemService = true;
+    key = config.sops.secrets.sync-key.path;
+    cert = config.sops.secrets.sync-cert.path;
     dataDir = "/var/lib/paperless";
     #guiAddress = "0.0.0.0:8385";
     settings = {
       devices = {
         "NAS" = { id = "P2MPFM2-RWPLO3C-KQVSLZJ-NGD7D6L-LEZDOMG-MK674XU-EHFPL2W-72TC2A6"; };
-        "Hades" = { id = "3SY4S6G-5JWNCCW-RP5LBLX-OKDHU22-RUX3DSR-PXVNAQC-UZ4DHOS-CBCTBQU"; };
+        "hades" = { id = quiet.syncthing.hades.id; };
       };
       folders = {
         "paperless" = {
@@ -53,7 +77,8 @@
         };
         "consume" = {
           path = "/var/lib/paperless/consume";
-          devices = [ "Hades"];
+          devices = [ "hades"];
+          id = "Consume";
         };
       };
     };

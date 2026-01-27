@@ -16,7 +16,6 @@
     "${toString modulesPath}/virtualisation/proxmox-lxc.nix"
     (sources.sops-nix + "/modules/sops")
     ../nixos/secrets.nix
-    #./paperless.nix
   ];
 
   sops.secrets = {
