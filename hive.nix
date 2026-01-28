@@ -17,17 +17,16 @@ in {
     allowApplyAll = false;
   };
 
-  defaults = { pkgs, name, ... }: {
+  defaults = { pkgs, name, lib, ... }: {
     # This module will be imported by all hosts
     imports = [
       ./nixos/common.nix
+      (sources.sops-nix + "/modules/sops")
     ];
 
 
     config = {
       networking.hostName = name;
-
-
       environment.systemPackages = with pkgs; [
         wget npins
       ];
@@ -46,11 +45,14 @@ in {
 
   Hades = { name, nodes, ... }: {
     imports = [
-      ./Hades/dellLaptop.nix
+      ./Hades/configuration.nix
+      ./Hades/Cale.nix
+      ./Hades/HP Envy.nix
     ];
 
     deployment = {
       allowLocalDeployment = true;
+      targetHost = null;
     };
 
 
