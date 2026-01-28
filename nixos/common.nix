@@ -3,8 +3,24 @@
   imports = [
     ./secrets.nix
   ];
+
+  nix.channel.enable = false;
+  nix.nixPath = [ "nixpkgs=/etc/nixos/nixpkgs" ];
+
+  environment.etc = {
+    "nixos/nixpkgs".source = builtins.storePath pkgs.path;
+  };
+
+  nixpkgs.overlays = [ (final: prev: {
+    inherit (prev.lixPackageSets.stable)
+      nixpkgs-review
+      nix-eval-jobs
+      nix-fast-build;
+      #colmena;
+  }) ];
+
   nix = {
-    package = pkgs.lix;
+    package = pkgs.lixPackageSets.stable.lix;
     settings = {
       experimental-features = [
         "nix-command"

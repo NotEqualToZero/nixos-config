@@ -7,7 +7,7 @@ in {
     # - A path to a Nixpkgs checkout
     # - The Nixpkgs lambda (e.g., import <nixpkgs>)
     # - An initialized Nixpkgs attribute set
-    nixpkgs = import sources."25.11"; #npins default nixpkgs currently 25.05 11/09/25
+    nixpkgs = import sources."25.11" ; #npins default nixpkgs currently 25.05 11/09/25
     nodeNixpkgs = {
       Hades = import sources.pkgs-uns;
       Heracles = import sources.pkgs-uns;
@@ -24,9 +24,8 @@ in {
       (sources.sops-nix + "/modules/sops")
     ];
 
-
     config = {
-      networking.hostName = name;
+     networking.hostName = name;
       environment.systemPackages = with pkgs; [
         wget npins
       ];
@@ -47,7 +46,7 @@ in {
     imports = [
       ./Hades/configuration.nix
       ./Hades/Cale.nix
-      ./Hades/HP Envy.nix
+      ./Hades/HPEnvy.nix
     ];
 
     deployment = {

@@ -12,19 +12,6 @@
       "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.4506.078d69f03934/nixexprs.tar.xz",
       "hash": "1zn8r7c40zd4xsklxg7gjq82ls8j113r27bc4gnfpf00hy4vpvsy"
     },
-    "impermanence": {
-      "type": "Git",
-      "repository": {
-        "type": "GitHub",
-        "owner": "nix-community",
-        "repo": "impermanence"
-      },
-      "branch": "master",
-      "submodules": false,
-      "revision": "4b3e914cdf97a5b536a889e939fb2fd2b043a170",
-      "url": "https://github.com/nix-community/impermanence/archive/4b3e914cdf97a5b536a889e939fb2fd2b043a170.tar.gz",
-      "hash": "04l16szln2x0ajq2x799krb53ykvc6vm44x86ppy1jg9fr82161c"
-    },
     "nixos-hardware": {
       "type": "Git",
       "repository": {
