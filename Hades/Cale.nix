@@ -41,8 +41,8 @@ users.users.cale = {
     syncthing
     pantum-driver
     libreoffice-qt-still
-    emojify
-    ];
+    (librewolf.override { cfg.enablePlasmaBrowserIntegration = true; })
+  ];
 };
 
 fonts.enableDefaultPackages = true;
@@ -50,7 +50,7 @@ fonts.packages = with pkgs; [
   nerd-fonts.symbols-only
 ];
 
-services.tailscale.enable = false;
+services.tailscale.enable = true;
 
 sops.secrets = {
   cale_passwd = {};

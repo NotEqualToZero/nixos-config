@@ -17,11 +17,7 @@ in {
       owner = "paperless";
     };
   };
-
-
-
-
-  networking.hostName = "PaperNix";
+  services.tailscale.enable = true;
 
   services.paperless = {
     enable = true;
@@ -42,8 +38,8 @@ in {
   };
 
   networking.firewall.interfaces."eth0" = {
-    allowedTCPPorts = [ 80 443 58080 22000 ];
-    allowedUDPPorts = [ 22000 ];
+    allowedTCPPorts = [ 80 443 58080 ];
+    #allowedUDPPorts = [ 22000 ];
   };
 
   users.users.paperless = {

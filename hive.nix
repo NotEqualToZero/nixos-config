@@ -25,7 +25,7 @@ in {
     ];
 
     config = {
-     networking.hostName = name;
+      networking.hostName = name;
       environment.systemPackages = with pkgs; [
         wget npins
       ];
@@ -42,7 +42,7 @@ in {
     # deployment.replaceUnknownProfiles = true;
   };
 
-  Hades = { name, nodes, ... }: {
+   Hades = { name, nodes, ... }: {
     imports = [
       ./Hades/configuration.nix
       ./Hades/Cale.nix
@@ -55,20 +55,24 @@ in {
     };
 
 
-  };
 
-  Mnemosyne = { name, nodes, ... }: {
+   };
+
+   Hades2 = { name, nodes, ... }: {
     imports = [
-      ./Mnemosyne/configuration.nix
+      ./Hades/configuration.nix
+      ./Hades/Cale.nix
+      ./Hades/HPEnvy.nix
     ];
 
     deployment = {
-      #buildOnTarget = true;
-      targetHost = "10.162.69.56";
-      targetUser = "admin";
+      allowLocalDeployment = true;
+      targetHost = null;
     };
-  };
 
+
+
+  };
   NAS = { name, nodes, ... }: {
     imports = [
       ./NAS/configuration.nix
