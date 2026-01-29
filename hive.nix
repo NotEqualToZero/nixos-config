@@ -23,7 +23,6 @@ in {
       ./nixos/common.nix
     ];
 
-
     config = {
       networking.hostName = name;
 
@@ -63,7 +62,7 @@ in {
 
     deployment = {
       #buildOnTarget = true;
-      targetHost = "10.162.69.56";
+      targetHost = "mnemosyne";
       targetUser = "admin";
     };
   };
@@ -88,7 +87,7 @@ in {
 
     deployment = {
       #buildOnTarget = true;
-      targetHost = "10.162.69.206";
+      targetHost = "paperless";
       targetUser = "admin";
     };
   };
@@ -100,7 +99,7 @@ in {
 
     deployment = {
       # buildOnTarget = true;
-      targetHost = "10.162.69.121";
+      targetHost = "heracles";
       targetUser = "admin";
     };
   };
@@ -111,7 +110,7 @@ in {
 
     deployment = {
       # buildOnTarget = true;
-      targetHost = "65.109.133.186";
+      targetHost = "lighthouse";
       targetUser = "admin";
     };
   };
