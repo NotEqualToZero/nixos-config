@@ -1,6 +1,7 @@
 { config, lib, pkgs, sources, ... }:
 let
   quiet = import ../secrets/quiet.nix;
+  cachy-kern = import sources.nix-cachyos-kernel.outPath;
 in {
 
 imports = [
@@ -79,6 +80,15 @@ programs._1password-gui = {
   # require enabling PolKit integration on some desktop environments (e.g. Plasma).
   polkitPolicyOwners = [ "cale" ];
 };
+
+nixpkgs.overlays = [
+  cachy-kern.overlays.pinned
+];
+
+boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-x86_64-v4;
+nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian" ];
+nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" ]; #cachy binary cache
+
 
 services.syncthing = {
   enable = false;

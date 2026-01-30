@@ -11,6 +11,7 @@ in {
     nodeNixpkgs = {
       Hades = import sources.pkgs-uns;
       Heracles = import sources.pkgs-uns;
+      Hades2 = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
 

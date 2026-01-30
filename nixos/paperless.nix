@@ -1,8 +1,9 @@
-{ config, lib, pkgs, sources, ... }:
+{ config, lib, pkgs, sources, modulesPath, ... }:
 let
   quiet = import ../secrets/quiet.nix;
 in {
   imports = [
+    "${toString modulesPath}/virtualisation/proxmox-lxc.nix"
   ];
 
   sops.secrets = {
@@ -50,7 +51,7 @@ in {
   };
 
   services.syncthing = {
-    enable = true;
+    enable = false;
     user = "paperless";
     group = "paperless";
     openDefaultPorts = true;
@@ -61,7 +62,7 @@ in {
     #guiAddress = "0.0.0.0:8385";
     settings = {
       devices = {
-        "NAS" = { id = "P2MPFM2-RWPLO3C-KQVSLZJ-NGD7D6L-LEZDOMG-MK674XU-EHFPL2W-72TC2A6"; };
+        "NAS" = { id = quiet.syncthing.nas.id; };
         "hades" = { id = quiet.syncthing.hades.id; };
       };
       folders = {

@@ -8,12 +8,15 @@
     tailscale-manage= {};
   };
 
+  boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
+
   services.tailscale = {
     enable = lib.mkDefault false;
+    openFirewall = true;
     # Enable tailscale at startup
 
     # If you would like to use a preauthorized key
-   authKeyFile = config.sops.secrets.tailscale-manage.path;
+   #authKeyFile = config.sops.secrets.tailscale-manage.path;
 
   };
   # 1. Enable the service and the firewall

@@ -9,8 +9,21 @@
     "25.11": {
       "type": "Channel",
       "name": "nixos-25.11",
-      "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.4506.078d69f03934/nixexprs.tar.xz",
-      "hash": "1zn8r7c40zd4xsklxg7gjq82ls8j113r27bc4gnfpf00hy4vpvsy"
+      "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.4882.fa83fd837f30/nixexprs.tar.xz",
+      "hash": "05gm1xxik4s3y3acqf57bbfmk2bnxzjbx42fnkxclfm1gcqjfcck"
+    },
+    "nix-cachyos-kernel": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "xddxdd",
+        "repo": "nix-cachyos-kernel"
+      },
+      "branch": "release",
+      "submodules": false,
+      "revision": "03f574805ffe01b47e7fa93c7128d678b2037729",
+      "url": "https://github.com/xddxdd/nix-cachyos-kernel/archive/03f574805ffe01b47e7fa93c7128d678b2037729.tar.gz",
+      "hash": "0ima1di64k58znvw571z3pib52vkfdpwsp4gwawp3kwyp1c5nyhq"
     },
     "nixos-hardware": {
       "type": "Git",
@@ -21,21 +34,21 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "d62603a997438e19182af69d3ce7be07565ecad4",
-      "url": "https://github.com/NixOS/nixos-hardware/archive/d62603a997438e19182af69d3ce7be07565ecad4.tar.gz",
-      "hash": "12218jd2bj9awl83zi0y55vki7m7i6qhm6dmqz8pmy8xfkaqap44"
+      "revision": "a351494b0e35fd7c0b7a1aae82f0afddf4907aa8",
+      "url": "https://github.com/NixOS/nixos-hardware/archive/a351494b0e35fd7c0b7a1aae82f0afddf4907aa8.tar.gz",
+      "hash": "1nyr1jrdy2bcm69s4zv2ifpsshrwma68fibrybqwcfi4s5rfsh20"
     },
     "nixpkgs": {
       "type": "Channel",
       "name": "nixos-25.05",
-      "url": "https://releases.nixos.org/nixos/25.05/nixos-25.05.813221.9a7b80b6f82a/nixexprs.tar.xz",
-      "hash": "1fqx9lvgr7wizmdca39yp2qd2xwps1dyv9zxqzrxkx50hk809jji"
+      "url": "https://releases.nixos.org/nixos/25.05/nixos-25.05.813814.ac62194c3917/nixexprs.tar.xz",
+      "hash": "1ddmkpi8fn643b50sg2241w85549cx53ahhhj7vf9129rhpqqd6z"
     },
     "pkgs-uns": {
       "type": "Channel",
       "name": "nixos-unstable",
-      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.05pre903292.2fad6eac6077/nixexprs.tar.xz",
-      "hash": "1c0c0a78466m07rr8z6wiixkn7s7lsy0y1cza3lg4ap2cwdl9zgb"
+      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.05pre935279.bfc1b8a45741/nixexprs.tar.xz",
+      "hash": "1ldpyswqdkznf83r7c01v6i27r291c1kpq8rz2qgqznmjsiaic78"
     },
     "sops-nix": {
       "type": "Git",
@@ -46,9 +59,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "c482a1c1bbe030be6688ed7dc84f7213f304f1ec",
-      "url": "https://github.com/Mic92/sops-nix/archive/c482a1c1bbe030be6688ed7dc84f7213f304f1ec.tar.gz",
-      "hash": "1rwfwrqniym6y8nz71c1f7dz4jlszxzbggg4m4dx3h2fcibkhvyn"
+      "revision": "c5eebd4eb2e3372fe12a8d70a248a6ee9dd02eff",
+      "url": "https://github.com/Mic92/sops-nix/archive/c5eebd4eb2e3372fe12a8d70a248a6ee9dd02eff.tar.gz",
+      "hash": "05b0gpg2xb43ya2kps3csj91jh1g926br1cgjfqr1ckacvgjnmy0"
     }
   },
   "version": 5

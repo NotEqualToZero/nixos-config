@@ -10,12 +10,12 @@
   sources,
   ...
 }:
-
-{
+let
+  quiet = import ../secrets/quiet.nix;
+in {
   imports = [
     "${toString modulesPath}/virtualisation/proxmox-lxc.nix"
     (sources.sops-nix + "/modules/sops")
-    ../nixos/secrets.nix
   ];
 
   sops.secrets = {
@@ -23,6 +23,16 @@
     keyid = {};
     accesskey = {};
     restic-passphrase = {};
+    sync-key = {
+      format = "binary";
+      sopsFile = ../secrets/nas-sync-key.pem;
+      owner = "syncthing";
+    };
+    sync-cert = {
+      format = "binary";
+      sopsFile = ../secrets/nas-sync-cert.pem;
+      owner = "syncthing";
+    };
   };
 
   sops.templates."repositoryfile".content = ''
@@ -166,11 +176,16 @@
 
   services.syncthing = {
     enable = true;
+    key = config.sops.secrets.sync-key.path;
+    cert = config.sops.secrets.sync-cert.path;
     user = "syncthing";
     openDefaultPorts = true;
     systemService = true;
     guiAddress = "0.0.0.0:8385";
     settings = {
+      devices = {
+        "Paperless" = { id = quiet.syncthing.paperless.id; };
+      };
       folders = {
         "paperless" = {
           path = "/storage/Paperless";
