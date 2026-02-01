@@ -46,6 +46,8 @@ users.users.cale = {
   ];
 };
 
+environment.variables = { SOPS_AGE_KEY_CMD="op read op://Private/Sops-Nix/password"; };
+
 fonts.enableDefaultPackages = true;
 fonts.packages = with pkgs; [
   nerd-fonts.symbols-only
@@ -85,7 +87,7 @@ nixpkgs.overlays = [
   cachy-kern.overlays.pinned
 ];
 
-boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-x86_64-v4;
+boot.kernelPackages = pkgs.linuxPackages_latest;
 nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian" ];
 nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" ]; #cachy binary cache
 

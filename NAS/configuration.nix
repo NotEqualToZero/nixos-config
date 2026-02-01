@@ -183,6 +183,10 @@ in {
     systemService = true;
     guiAddress = "0.0.0.0:8385";
     settings = {
+      gui = {
+        user = "tim";
+        password = "enchanter";
+      };
       devices = {
         "Paperless" = { id = quiet.syncthing.paperless.id; };
       };

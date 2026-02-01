@@ -94,7 +94,7 @@ in {
 
     deployment = {
       #buildOnTarget = true;
-      targetHost = "10.162.69.206";
+      targetHost = "paperless";
       targetUser = "admin";
     };
   };
@@ -117,7 +117,19 @@ in {
 
     deployment = {
       # buildOnTarget = true;
-      targetHost = "65.109.133.186";
+      targetHost = "lighthouse";
+      targetUser = "admin";
+    };
+  };
+  MediaNix= { name, nodes, ... }: {
+    imports = [
+      ./nixos/Media.nix
+      ./MediaNix/configuration.nix
+    ];
+
+    deployment = {
+      # buildOnTarget = true;
+      targetHost = "10.162.69.157";
       targetUser = "admin";
     };
   };

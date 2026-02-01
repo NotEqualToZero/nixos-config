@@ -25,6 +25,19 @@
       "url": "https://github.com/xddxdd/nix-cachyos-kernel/archive/856b12c3db3cb7a2531d4f26eac6f2129284f7e1.tar.gz",
       "hash": "sha256-giMeVSEYM80pRrpB95wwgvcGODbkKT3LKVnTpVTj8TA="
     },
+    "nixflix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NotEqualToZero",
+        "repo": "nixflix"
+      },
+      "branch": "flake-compat",
+      "submodules": false,
+      "revision": "9d093e9e5b478de013448c6c785eb6f36b3b3d6a",
+      "url": "https://github.com/NotEqualToZero/nixflix/archive/9d093e9e5b478de013448c6c785eb6f36b3b3d6a.tar.gz",
+      "hash": "sha256-xEL8avUdYZpv/kYTP1eklUGsHyNqk53pXom6R2ZQelc="
+    },
     "nixos-hardware": {
       "type": "Git",
       "repository": {
