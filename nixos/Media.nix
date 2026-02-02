@@ -6,6 +6,7 @@ in {
     nixflix.nixosModules.default
   ];
 
+  nix.settings.fallback = true; #temporary?
   users.users.admin.extraGroups = [ "media" ];
 
   sops.secrets = {
@@ -103,12 +104,12 @@ in {
 
     jellyseerr = {
       enable = true;
-      vpn.enable = false;
+      vpn.enable = true;
       apiKey = {_secret = config.sops.secrets.seerr-api.path;};
     };
 
     mullvad = {
-      enable = false;
+      enable = true;
       accountNumber = {_secret = config.sops.secrets.mullvad-acc.path;};
       autoConnect = true;
       location = [ "au" ];

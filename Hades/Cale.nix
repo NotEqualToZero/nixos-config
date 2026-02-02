@@ -46,6 +46,22 @@ users.users.cale = {
   ];
 };
 
+services.i2pd = {
+  enable = true;
+  address = "127.0.0.1";
+  proto = {
+    http.enable = true;
+    socksProxy.enable = true;
+    httpProxy.enable = true;
+    sam.enable = true;
+    i2cp = {
+      enable = true;
+      address = "127.0.0.1";
+      port = 7654;
+    };
+  };
+};
+
 environment.variables = { SOPS_AGE_KEY_CMD="op read op://Private/Sops-Nix/password"; };
 
 fonts.enableDefaultPackages = true;
@@ -88,7 +104,7 @@ nixpkgs.overlays = [
 ];
 
 boot.kernelPackages = pkgs.linuxPackages_latest;
-nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian" ];
+nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" ];
 nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" ]; #cachy binary cache
 
 
