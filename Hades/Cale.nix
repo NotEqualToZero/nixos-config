@@ -14,6 +14,8 @@ users.users.cale = {
     "networkmanager"
     "wheel"
     "scanner"
+    "lp"
+    "dialout"
   ];
   packages = with pkgs; [
     obsidian
@@ -104,7 +106,7 @@ nixpkgs.overlays = [
   cachy-kern.overlays.pinned
 ];
 
-boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-x86_64-v4;
+boot.kernelPackages = pkgs.linuxPackages_latest; #pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-x86_64-v4;
 nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" "https://cache.garnix.io/" ];
 nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" ]; #cachy binary cache
 
