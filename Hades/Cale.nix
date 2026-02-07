@@ -38,6 +38,7 @@ users.users.cale = {
     shellcheck
     pandoc
     cmake
+    simple-scan
     gnumake
     syncthing
     pantum-driver
@@ -103,9 +104,9 @@ nixpkgs.overlays = [
   cachy-kern.overlays.pinned
 ];
 
-boot.kernelPackages = pkgs.linuxPackages_latest;
-nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" ];
-nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" ]; #cachy binary cache
+boot.kernelPackages = pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-x86_64-v4;
+nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" "https://cache.garnix.io/" ];
+nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" ]; #cachy binary cache
 
 
 services.syncthing = {

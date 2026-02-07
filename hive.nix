@@ -12,6 +12,7 @@ in {
       Hades = import sources.pkgs-uns;
       Heracles = import sources.pkgs-uns;
       Hades2 = import sources.pkgs-uns;
+      Factorio = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
 
@@ -94,7 +95,7 @@ in {
 
     deployment = {
       #buildOnTarget = true;
-      targetHost = "paperless";
+      targetHost = "papernix";
       targetUser = "admin";
     };
   };
@@ -106,7 +107,7 @@ in {
 
     deployment = {
       # buildOnTarget = true;
-      targetHost = "10.162.69.121";
+      targetHost = "Heracles";
       targetUser = "admin";
     };
   };
@@ -130,6 +131,18 @@ in {
     deployment = {
       # buildOnTarget = true;
       targetHost = "10.162.69.157";
+      targetUser = "admin";
+    };
+  };
+  Factorio = { name, nodes, ... }: {
+    imports = [
+      ./nixos/factorio.nix
+      ./template/proxmox-lxc.nix
+    ];
+
+    deployment = {
+      # buildOnTarget = true;
+      targetHost = "factorio";
       targetUser = "admin";
     };
   };

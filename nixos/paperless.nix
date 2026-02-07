@@ -10,12 +10,10 @@ in {
     sync-key = {
       format = "binary";
       sopsFile = ../secrets/paperless-sync-key.pem;
-      owner = "paperless";
     };
     sync-cert = {
       format = "binary";
       sopsFile = ../secrets/paperless-sync-cert.pem;
-      owner = "paperless";
     };
   };
   services.tailscale.enable = true;
@@ -51,15 +49,15 @@ in {
   };
 
   services.syncthing = {
-    enable = false;
+    enable = true;
     user = "paperless";
     group = "paperless";
     openDefaultPorts = true;
     systemService = true;
     key = config.sops.secrets.sync-key.path;
     cert = config.sops.secrets.sync-cert.path;
-    dataDir = "/var/lib/paperless";
-    #guiAddress = "0.0.0.0:8385";
+    dataDir = "/var/lib/syncthing";
+    guiAddress = "0.0.0.0:8385";
     settings = {
       devices = {
         "NAS" = { id = quiet.syncthing.nas.id; };

@@ -44,37 +44,6 @@ in {
     AWS_SECRET_ACCESS_KEY="${config.sops.placeholder."accesskey"}"
   '';
 
-  users.users.admin = {
-    isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" ];
-
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMUgqWiEREHr5rZb3zfLuPf3i+Q8fW00TqHZvDJjcIyG"
-    ];
-
-    # passwordFile needs to be in a volume marked with  `neededForBoot = true`
-    packages = with pkgs; [
-    ];
-  };
-
-  services.openssh = {
-    enable = true;
-    passwordAuthentication = false;
-    # allowSFTP = false; # Don't set this if you need sftp
-    challengeResponseAuthentication = true;
-    extraConfig = ''
-      AllowTcpForwarding yes
-      X11Forwarding no
-      AllowAgentForwarding yes
-      AllowStreamLocalForwarding no
-      AuthenticationMethods publickey
-      '';
-  };
-  nix.settings.trusted-users = [ "admin" ];
-
-
-  security.sudo.wheelNeedsPassword = false;
-
 
   networking = {
     dhcpcd.enable = false;
@@ -181,19 +150,15 @@ in {
     user = "syncthing";
     openDefaultPorts = true;
     systemService = true;
-    guiAddress = "0.0.0.0:8385";
+    #guiAddress = "0.0.0.0:8385";
     settings = {
-      gui = {
-        user = "tim";
-        password = "enchanter";
-      };
       devices = {
         "Paperless" = { id = quiet.syncthing.paperless.id; };
       };
       folders = {
         "paperless" = {
           path = "/storage/Paperless";
-          #devices = [ "paperless"];
+          devices = [ "Paperless"];
           type = "receiveonly";
           id = "zofgl-49s4j";
         };
