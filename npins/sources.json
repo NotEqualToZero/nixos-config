@@ -12,6 +12,19 @@
       "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.5065.41e216c0ca66/nixexprs.tar.xz",
       "hash": "sha256-OGuC+gtMQt8j7FPOx3p5ASig+SkaXnpf9yNjRpetg4Y="
     },
+    "jw-st": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "jonwin1",
+        "repo": "st-jonwin"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "74978c34ea4557e7507722d05a5d886b5d02a79a",
+      "url": "https://github.com/jonwin1/st-jonwin/archive/74978c34ea4557e7507722d05a5d886b5d02a79a.tar.gz",
+      "hash": "sha256-Nge7gukW+Et5UTzXWJl73KD4+HpcvHy+93oRzyr+a+o="
+    },
     "nix-cachyos-kernel": {
       "type": "Git",
       "repository": {
@@ -75,6 +88,34 @@
       "revision": "1e89149dcfc229e7e2ae24a8030f124a31e4f24f",
       "url": "https://github.com/Mic92/sops-nix/archive/1e89149dcfc229e7e2ae24a8030f124a31e4f24f.tar.gz",
       "hash": "sha256-twBMKGQvaztZQxFxbZnkg7y/50BW9yjtCBWwdjtOZew="
+    },
+    "st": {
+      "type": "GitRelease",
+      "repository": {
+        "type": "Git",
+        "url": "git://git.suckless.org/st"
+      },
+      "pre_releases": false,
+      "version_upper_bound": null,
+      "release_prefix": null,
+      "submodules": false,
+      "version": "0.9.3",
+      "revision": "6e970474743d57a5d8b054c41fd3bff2bc895742",
+      "url": null,
+      "hash": "sha256-Xr1JtaOMVgn+zsD39LFjP/0dkYkvaAXbEcYb3ptgYLA="
+    },
+    "st-custom": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NotEqualToZero",
+        "repo": "suckless-st"
+      },
+      "branch": "custom",
+      "submodules": false,
+      "revision": "3805bb672729363556cf04233f23229e5b784bd4",
+      "url": "https://github.com/NotEqualToZero/suckless-st/archive/3805bb672729363556cf04233f23229e5b784bd4.tar.gz",
+      "hash": "sha256-0oqydPj1kfFxJG60ZFioSbbpiXtRu0WbAV6z5d8kRzw="
     }
   },
   "version": 7

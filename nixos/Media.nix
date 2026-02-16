@@ -6,7 +6,7 @@ in {
     nixflix.nixosModules.default
   ];
 
-  nix.settings.fallback = true; #temporary?
+  # nix.settings.fallback = true; #temporary?
   users.users.admin.extraGroups = [ "media" ];
 
   sops.secrets = {

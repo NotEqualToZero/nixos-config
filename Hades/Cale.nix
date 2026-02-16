@@ -5,6 +5,7 @@ let
 in {
 
 imports = [
+  ../nixos/sway.nix
 ];
 
 users.users.cale = {
@@ -19,6 +20,7 @@ users.users.cale = {
   ];
   packages = with pkgs; [
     obsidian
+    st
     vlc
     flameshot
     qutebrowser
