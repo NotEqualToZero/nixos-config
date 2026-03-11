@@ -5,8 +5,12 @@ let
 in {
 
 imports = [
-  ../nixos/sway.nix
+  ../nixos/gaming.nix
+  ../nixos/dwl.nix
+  ../nixos/printing.nix
 ];
+
+#services.xserver.windowManager.dwl.enable = true;
 
 users.users.cale = {
   isNormalUser = true;
@@ -74,7 +78,12 @@ fonts.packages = with pkgs; [
   nerd-fonts.symbols-only
 ];
 
-services.tailscale.enable = true;
+services.tailscale = {
+  enable = true;
+  useRoutingFeatures = "client";
+};
+
+networking.firewall.checkReversePath = "loose";
 
 sops.secrets = {
   cale_passwd = {};
@@ -95,7 +104,6 @@ nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
   "1password"
 ];
 
-
 programs._1password.enable = true;
 programs._1password-gui = {
   enable = true;
@@ -112,9 +120,8 @@ boot.kernelPackages = pkgs.linuxPackages_latest; #pkgs.cachyosKernels.linuxPacka
 nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" "https://cache.garnix.io/" ];
 nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" ]; #cachy binary cache
 
-
 services.syncthing = {
-  enable = false;
+  enable = true;
   dataDir = "/home/cale/Syncthing/";
   user = "cale";
   openDefaultPorts = true;

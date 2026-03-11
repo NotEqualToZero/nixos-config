@@ -17,7 +17,7 @@
 
   # boot.supportedFilesystems = [ "ntfs" ];
 
-  services.xserver.videoDrivers = [ "displaylink" "modesetting" ];
+  services.xserver.videoDrivers = [ "modesetting" ];
   systemd.services.dlm.wantedBy = [ "multi-user.target" ];
   environment.systemPackages = with pkgs; [
     displaylink
