@@ -4,7 +4,14 @@
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
+      ../nixos/garagefs.nix
     ];
+  sops.secrets = {
+    media-rpc = {
+      owner = config.users.users.garage.name;
+      path = "/var/lib/garage/rpc.yaml";
+    };
+  };
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -24,6 +31,16 @@
     # passwordFile needs to be in a volume marked with  `neededForBoot = true`
     packages = with pkgs; [
     ];
+  };
+
+  services.garage = {
+    enable = true;
+    settings = {
+      data_dir = [
+        { capacity = "3T"; path = "/mnt/storage/garage/data"; }
+      ];
+      rpc_secret_file = config.sops.secrets.media-rpc.path;
+    };
   };
 
   services.openssh = {

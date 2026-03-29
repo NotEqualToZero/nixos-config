@@ -34,9 +34,9 @@
       },
       "branch": "6.6.3_vr",
       "submodules": false,
-      "revision": "51a7520ff62ea3440fb43763726ee16f24e49c6a",
-      "url": "https://invent.kde.org/api/v4/projects/lightofmysoul%2Fkwin/repository/archive.tar.gz?sha=51a7520ff62ea3440fb43763726ee16f24e49c6a",
-      "hash": "sha256-Dncm4nGJWO1QUai/N80Blkqepka1s5JW+SBVdS2AuxI="
+      "revision": "32e54d684b8cc2efe14b6e83f003491c34af80db",
+      "url": "https://invent.kde.org/api/v4/projects/lightofmysoul%2Fkwin/repository/archive.tar.gz?sha=32e54d684b8cc2efe14b6e83f003491c34af80db",
+      "hash": "sha256-HUV1yHhILoiBDPLBn5qWM9NFqiFe8fUOT4k603rDg7Q="
     },
     "monado": {
       "type": "Git",
@@ -60,9 +60,9 @@
       },
       "branch": "release",
       "submodules": false,
-      "revision": "c0fcdf5cab21b7e3157e84046b57407a60934415",
-      "url": "https://github.com/xddxdd/nix-cachyos-kernel/archive/c0fcdf5cab21b7e3157e84046b57407a60934415.tar.gz",
-      "hash": "sha256-dnFbucSiAjjWmPENgyIiK/ocCuYSp4sM6Sq4WCVjG+8="
+      "revision": "c137ed38d662234118b71f0afb97a00000ca05e6",
+      "url": "https://github.com/xddxdd/nix-cachyos-kernel/archive/c137ed38d662234118b71f0afb97a00000ca05e6.tar.gz",
+      "hash": "sha256-iM6fp6vHi5G8oLAWEOgV+I4e40JMoxKS/eE06+YY5T0="
     },
     "nixflix": {
       "type": "Git",

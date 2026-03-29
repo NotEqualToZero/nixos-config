@@ -17,6 +17,7 @@ in {
     "${toString modulesPath}/virtualisation/proxmox-lxc.nix"
     (sources.sops-nix + "/modules/sops")
     ./remote-builder.nix
+    ../nixos/garagefs.nix
   ];
 
   sops.secrets = {
@@ -33,6 +34,10 @@ in {
       format = "binary";
       sopsFile = ../secrets/nas-sync-cert.pem;
       owner = "syncthing";
+    };
+    garagefs_rpc_secret = {
+      owner = config.users.users.garage.name;
+      path = "/var/lib/garage/rpc.yaml";
     };
   };
 
@@ -93,6 +98,16 @@ in {
     samba-wsdd = {
       enable = true;
       openFirewall = true;
+    };
+
+    garage = {
+      enable = true;
+      settings = {
+        data_dir = [
+          { capacity = "10T"; path = "/storage/garage/data"; }
+        ];
+        rpc_secret_file = config.sops.secrets.garagefs_rpc_secret.path;
+      };
     };
 
 
