@@ -113,6 +113,10 @@ sops.secrets = {
     sopsFile = ../secrets/hades-sync-cert.pem;
     owner = "cale";
   };
+  builder-ssh = {
+    format = "binary";
+    sopsFile = ../secrets/remotebuilder/remotebuild;
+  };
 };
 
 nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [

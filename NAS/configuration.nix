@@ -16,6 +16,7 @@ in {
   imports = [
     "${toString modulesPath}/virtualisation/proxmox-lxc.nix"
     (sources.sops-nix + "/modules/sops")
+    ./remote-builder.nix
   ];
 
   sops.secrets = {
