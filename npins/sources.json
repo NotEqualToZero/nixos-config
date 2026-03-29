@@ -25,6 +25,32 @@
       "url": "https://github.com/jonwin1/st-jonwin/archive/74978c34ea4557e7507722d05a5d886b5d02a79a.tar.gz",
       "hash": "sha256-Nge7gukW+Et5UTzXWJl73KD4+HpcvHy+93oRzyr+a+o="
     },
+    "kwin-vr": {
+      "type": "Git",
+      "repository": {
+        "type": "GitLab",
+        "repo_path": "lightofmysoul/kwin",
+        "server": "https://invent.kde.org/"
+      },
+      "branch": "6.6.3_vr",
+      "submodules": false,
+      "revision": "51a7520ff62ea3440fb43763726ee16f24e49c6a",
+      "url": "https://invent.kde.org/api/v4/projects/lightofmysoul%2Fkwin/repository/archive.tar.gz?sha=51a7520ff62ea3440fb43763726ee16f24e49c6a",
+      "hash": "sha256-Dncm4nGJWO1QUai/N80Blkqepka1s5JW+SBVdS2AuxI="
+    },
+    "monado": {
+      "type": "Git",
+      "repository": {
+        "type": "GitLab",
+        "repo_path": "lightofmysoul/monado",
+        "server": "https://gitlab.freedesktop.org/"
+      },
+      "branch": "rayneo_drv",
+      "submodules": false,
+      "revision": "cbc71fdbdf4323e21ae72bd850bb5ce8874d4387",
+      "url": "https://gitlab.freedesktop.org/api/v4/projects/lightofmysoul%2Fmonado/repository/archive.tar.gz?sha=cbc71fdbdf4323e21ae72bd850bb5ce8874d4387",
+      "hash": "sha256-Ewdupd3DI9bgAgfnHe24AecEi0odWUeF0nSQ0g1zYts="
+    },
     "nix-cachyos-kernel": {
       "type": "Git",
       "repository": {

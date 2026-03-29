@@ -8,9 +8,25 @@ imports = [
   ../nixos/gaming.nix
   ../nixos/dwl.nix
   ../nixos/printing.nix
+# ../nixos/vr.nix
 ];
 
 #services.xserver.windowManager.dwl.enable = true;
+nix.buildMachines = [
+  {
+    hostName = "nas";
+    systems = [ "x86_64-linux" ];
+    protocol = "ssh-ng";
+    maxJobs = 8;
+    speedFactor = 5;
+    supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+    sshUser = "remotebuild";
+    sshKey = config.sops.secrets.builder-ssh.path;
+  }
+];
+nix.distributedBuilds = true;
+
+nix.settings.builders-use-substitutes = true;
 
 users.users.cale = {
   isNormalUser = true;

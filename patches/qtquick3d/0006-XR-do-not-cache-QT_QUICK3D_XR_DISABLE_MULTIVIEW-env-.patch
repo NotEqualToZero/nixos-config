@@ -1,0 +1,31 @@
+From ae69b6a2f9d621054d5450c8400c87ad3c150853 Mon Sep 17 00:00:00 2001
+From: Stanislav Aleksandrov <lightofmysoul@gmail.com>
+Date: Fri, 27 Mar 2026 09:40:37 +0000
+Subject: [PATCH 6/6] XR: do not cache QT_QUICK3D_XR_DISABLE_MULTIVIEW env
+ variable
+
+With this change multiview can be toggled by changing
+QT_QUICK3D_XR_DISABLE_MULTIVIEW env var while application is running.
+
+Pick-to: 6.11
+Change-Id: I8d22f24f2801e80f9ad00afe5b747abd6fc612ad
+---
+ src/xr/quick3dxr/qquick3dxrmanager.cpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/xr/quick3dxr/qquick3dxrmanager.cpp b/src/xr/quick3dxr/qquick3dxrmanager.cpp
+index d96755fc8..ec2eb7557 100644
+--- a/src/xr/quick3dxr/qquick3dxrmanager.cpp
++++ b/src/xr/quick3dxr/qquick3dxrmanager.cpp
+@@ -218,7 +218,7 @@ bool QQuick3DXrManager::event(QEvent *e)
+ 
+ bool QQuick3DXrManager::isMultiviewRenderingDisabled()
+ {
+-    static bool disabled = qEnvironmentVariableIntValue("QT_QUICK3D_XR_DISABLE_MULTIVIEW") != 0;
++    const bool disabled = qEnvironmentVariableIntValue("QT_QUICK3D_XR_DISABLE_MULTIVIEW") != 0;
+     return disabled;
+ }
+ 
+-- 
+2.52.0
+
