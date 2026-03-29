@@ -9,14 +9,14 @@ in {
     # - An initialized Nixpkgs attribute set
     nixpkgs = import sources."25.11" ; #npins default nixpkgs currently 25.05 11/09/25
     nodeNixpkgs = {
-      Hades = import sources.pkgs-uns;
-      Heracles = import sources.pkgs-uns;
+#     Hades = import sources.pkgs-uns;
+#     Heracles = import sources.pkgs-uns;
       Hades2 = import sources.pkgs-uns;
       Factorio = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
 
-    allowApplyAll = false;
+#    allowApplyAll = false;
   };
 
   defaults = { pkgs, name, lib, ... }: {
@@ -46,21 +46,17 @@ in {
     # deployment.replaceUnknownProfiles = true;
   };
 
-   Hades = { name, nodes, ... }: {
-    imports = [
-      ./Hades/configuration.nix
-      ./Hades/Cale.nix
-      ./Hades/HPEnvy.nix
-    ];
-
-    deployment = {
-      allowLocalDeployment = true;
-      targetHost = null;
-    };
-
-
-
-   };
+#   Hades = { name, nodes, ... }: {
+#    imports = [
+#      ./Hades/configuration.nix
+#      ./Hades/Cale.nix
+#      ./Hades/HPEnvy.nix
+#    ];
+#    deployment = {
+#      allowLocalDeployment = true;
+#      targetHost = null;
+#    };
+#   };
 
    Hades2 = { name, nodes, ... }: {
     imports = [
@@ -102,17 +98,18 @@ in {
     };
   };
 
-  Heracles = { name, nodes, ... }: {
-    imports = [
-      ./Heracles/configuration.nix
-    ];
+#  Heracles = { name, nodes, ... }: {
+#    imports = [
+#      ./Heracles/configuration.nix
+#    ];
+#
+#    deployment = {
+#      # buildOnTarget = true;
+#      targetHost = "Heracles";
+#      targetUser = "admin";
+#    };
+#  };
 
-    deployment = {
-      # buildOnTarget = true;
-      targetHost = "Heracles";
-      targetUser = "admin";
-    };
-  };
   Lighthouse = { name, nodes, ... }: {
     imports = [
       ./Hetzner/configuration.nix
@@ -124,6 +121,7 @@ in {
       targetUser = "admin";
     };
   };
+
   MediaNix= { name, nodes, ... }: {
     imports = [
       ./nixos/Media.nix
@@ -136,6 +134,7 @@ in {
       targetUser = "admin";
     };
   };
+
   Factorio = { name, nodes, ... }: {
     imports = [
       ./nixos/factorio.nix

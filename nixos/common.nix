@@ -6,6 +6,10 @@
 
   sops.secrets = {
     tailscale-manage= {};
+   builder-ssh = {
+    format = "binary";
+    sopsFile = ../secrets/remotebuilder/remotebuild;
+   };
   };
 
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
@@ -22,6 +26,20 @@
     packages = with pkgs; [
     ];
   };
+
+  nix.buildMachines = [
+    {
+      hostName = "nas";
+      systems = [ "x86_64-linux" ];
+      protocol = "ssh-ng";
+      maxJobs = 8;
+      speedFactor = 5;
+      supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
+      sshUser = "remotebuild";
+      sshKey = config.sops.secrets.builder-ssh.path;
+    }
+  ];
+  nix.distributedBuilds = true;
 
   services.openssh = {
     enable = true;
@@ -99,6 +117,7 @@
       keep-outputs = true;
       keep-derivations = true;
       auto-optimise-store = true;
+      builders-use-substitutes = true;
     };
     gc = {
       automatic = true;
