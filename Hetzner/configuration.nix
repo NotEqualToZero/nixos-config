@@ -11,13 +11,22 @@
   imports = [
     ./hardware-configuration.nix
     ./networking.nix # generated at runtime by nixos-infect
+    ../nixos/garagefs.nix
   ];
 
   sops.secrets = {
     tailscale-manage= {};
   };
 
-
+  services.garage = {
+    enable = true;
+    settings = {
+      data_dir = [
+        { capacity = "1G"; path = "/var/lib/garage/data"; }
+      ];
+      rpc_public_addr = "100.66.187.64:3901";
+    };
+  };
 
   services.tailscale = {
     enable = true;

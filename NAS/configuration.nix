@@ -25,6 +25,7 @@ in {
     keyid = {};
     accesskey = {};
     restic-passphrase = {};
+    s3-key = {};
     sync-key = {
       format = "binary";
       sopsFile = ../secrets/nas-sync-key.pem;
@@ -34,10 +35,6 @@ in {
       format = "binary";
       sopsFile = ../secrets/nas-sync-cert.pem;
       owner = "syncthing";
-    };
-    garagefs_rpc_secret = {
-      owner = config.users.users.garage.name;
-      path = "/var/lib/garage/rpc.yaml";
     };
   };
 
@@ -104,14 +101,21 @@ in {
       enable = true;
       settings = {
         data_dir = [
-          { capacity = "10T"; path = "/storage/garage/data"; }
+          { capacity = "5T"; path = "/storage/garage/data"; }
         ];
-        rpc_secret_file = config.sops.secrets.garagefs_rpc_secret.path;
+        rpc_public_addr = "[fd7a:115c:a1e0::7135:6604]:3901";
       };
     };
-
-
   };
+
+  fileSystems."s3fs" = {
+    device = "filesystem";
+    mountPoint = "/s3fs";
+    fsType = "fuse./run/current-system/sw/bin/s3fs";
+    noCheck = true;
+    options = [ "_netdev" "rw" "allow_other" "use_path_request_style" "url=http://localhost:3900" "passwd_file=${config.sops.secrets.s3-key.path}" "umask=0000" "users" "nofail" "exec" "endpoint=garage" ];
+  };
+
 
   services.tailscale = {
     enable = true;
@@ -125,6 +129,8 @@ in {
     nfs-utils
     restic
     ranger
+    s3fs
+    fuse
   ];
 
   services.restic.backups = {

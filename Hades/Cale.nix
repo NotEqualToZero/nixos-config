@@ -11,6 +11,7 @@ imports = [
 # ../nixos/vr.nix
 ];
 
+
 #services.xserver.windowManager.dwl.enable = true;
 users.users.cale = {
   isNormalUser = true;
@@ -24,6 +25,7 @@ users.users.cale = {
   ];
   packages = with pkgs; [
     obsidian
+    google-chrome
     st
     vlc
     flameshot
@@ -56,7 +58,7 @@ users.users.cale = {
 };
 
 services.i2pd = {
-  enable = true;
+  enable = false;
   address = "127.0.0.1";
   proto = {
     http.enable = true;
@@ -125,7 +127,7 @@ nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" "https://cac
 nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" ]; #cachy binary cache
 
 services.syncthing = {
-  enable = true;
+  enable = false;
   dataDir = "/home/cale/Syncthing/";
   user = "cale";
   openDefaultPorts = true;

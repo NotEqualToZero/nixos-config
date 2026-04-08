@@ -147,4 +147,27 @@ in {
       targetUser = "admin";
     };
   };
+
+  clotho = { name, nodes, ... }: {
+    imports = [
+      ./nixos/garagefs.nix
+      ./Systems/clotho.nix
+    ];
+
+    deployment = {
+      targetHost = "clotho";
+      targetUser = "admin";
+    };
+
+    services.garage = {
+      enable = true;
+      settings = {
+        data_dir = [
+          { path = "/storage"; capacity = "1T"; }
+        ];
+        rpc_public_addr = "[fd7a:115c:a1e0::773a:195c]:3901";
+      };
+    };
+    services.tailscale.enable = true;
+  };
 }

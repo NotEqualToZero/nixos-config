@@ -7,10 +7,6 @@
       ../nixos/garagefs.nix
     ];
   sops.secrets = {
-    media-rpc = {
-      owner = config.users.users.garage.name;
-      path = "/var/lib/garage/rpc.yaml";
-    };
   };
 
   # Bootloader.
@@ -39,7 +35,7 @@
       data_dir = [
         { capacity = "3T"; path = "/mnt/storage/garage/data"; }
       ];
-      rpc_secret_file = config.sops.secrets.media-rpc.path;
+      rpc_public_addr = "[fd7a:115c:a1e0::c935:7c75]:3901";
     };
   };
 
