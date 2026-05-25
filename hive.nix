@@ -13,6 +13,7 @@ in {
 #     Heracles = import sources.pkgs-uns;
       Hades2 = import sources.pkgs-uns;
       Factorio = import sources.pkgs-uns;
+      MediaNix = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
 
@@ -124,7 +125,7 @@ in {
 
   MediaNix= { name, nodes, ... }: {
     imports = [
-      ./nixos/Media.nix
+      #./nixos/Media.nix
       ./MediaNix/configuration.nix
     ];
 
@@ -163,7 +164,7 @@ in {
       enable = true;
       settings = {
         data_dir = [
-          { path = "/storage"; capacity = "1T"; }
+          { path = "/storage/garage"; capacity = "2T"; }
         ];
         rpc_public_addr = "[fd7a:115c:a1e0::773a:195c]:3901";
       };

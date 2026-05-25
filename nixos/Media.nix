@@ -1,6 +1,6 @@
 { config, lib, pkgs, sources, ... }:
 let
-  nixflix = import sources.nixflix;
+  nixflix = import sources.nixflix { inherit pkgs; };
   pkgs-uns = import sources.pkgs-uns {
     system = "x86_64-linux"; # Adjust to your system
   };
@@ -10,10 +10,10 @@ in {
     ../Compose2Nix/octo-fiesta.nix
   ];
 
-  octo-fiesta.enable = true;
+  octo-fiesta.enable = false;
 
   environment.systemPackages = with pkgs; [
-    beets
+    #beets
   ];
 
   # nix.settings.fallback = true; #temporary?
@@ -23,6 +23,7 @@ in {
 
   sops.secrets = {
     jelly-pass = {};
+    jelly-api = {};
     sonarr-api = {};
     radarr-api = {};
     lidarr-api = {};
@@ -47,7 +48,7 @@ in {
   nixflix = {
     enable = false;
     mediaDir = "/mnt/storage/media";
-    stateDir = "/data/.state";
+    #stateDir = "/data/.state";
     downloadsDir = "/mnt/storage/mediadata";
 
     theme = {
@@ -56,28 +57,45 @@ in {
     };
 
     postgres.enable = true;
-    #nginx.enable = true;
+    nginx = {
+      enable = true;
+      addHostsEntries = false;
+    };
 
     jellyfin = {
-      enable = true;
+      enable = false;
+      apiKey._secret = config.sops.secrets.jelly-api.path;
       users.admin= {
         policy.isAdministrator = true;
-        password = {_secret = config.sops.secrets.jelly-pass.path;};
+        password._secret = config.sops.secrets.jelly-pass.path;
+      };
+      plugins = {
+        "Bookshelf" = {
+          package = nixflix.lib.jellyfinPlugins.fromRepo {
+            version = "13.0.0.0";
+            hash = "sha256-16jaQRh1rIFE27nSSEWNF7UjVsPJDaRf24Ews0BZGas=";
+          };
+          config = {
+            # Plain string (visible in Nix store)
+            #ComicVineApiKey = "my-api-key";
+            # Or as a secret (read from file at activation time)
+            # ComicVineApiKey._secret = "/run/secrets/comic-vine-api-key";
+          };
+        };
       };
     };
 
     prowlarr = {
-      enable = true;
+      enable = false;
       config = {
-        apiKey = {_secret = config.sops.secrets.prowlarr-api.path;};
+        apiKey._secret = config.sops.secrets.prowlarr-api.path;
          hostConfig = {
-          password = {_secret = config.sops.secrets.jelly-pass.path;};
-          username = "admin";
+          password._secret = config.sops.secrets.jelly-pass.path;
          };
          indexers = [
            {
              name = "NZBStars";
-             apiKey = {_secret = config.sops.secrets.NZBStars-api.path;};
+             apiKey._secret = config.sops.secrets.NZBStars-api.path;
            }
            { name = "BitSearch"; }
            { name = "Bangumi Moe"; }
@@ -90,38 +108,12 @@ in {
       };
     };
 
-    sabnzbd = {
-      enable = true;
-      settings = {
-        misc = {
-          api_key = {_secret = config.sops.secrets.sabnzbd-api.path;};
-          nzb_key = {_secret = config.sops.secrets.sabnzbd-nzb.path;};
-        };
-
-        servers = [
-          {
-            name = "Eweka";
-            host = "sslreader.eweka.nl";
-            port = 563;
-            # Secrets use { _secret = /path; } syntax
-            username = {_secret = config.sops.secrets.eweka-user.path;};
-            password = {_secret = config.sops.secrets.eweka-pass.path;};
-            connections = 20;
-            ssl = true;
-            priority = 0;
-            retention = 3000;
-          }
-        ];
-      };
-    };
-
     sonarr = {
-      enable = true;
+      enable = false;
       config = {
-        apiKey = {_secret = config.sops.secrets.sonarr-api.path;};
+        apiKey._secret = config.sops.secrets.sonarr-api.path;
         hostConfig = {
-          password = {_secret = config.sops.secrets.jelly-pass.path;};
-          username = "admin";
+          password._secret = config.sops.secrets.jelly-pass.path;
         };
       };
     };
@@ -129,10 +121,9 @@ in {
     sonarr-anime = {
       enable = false;
       config = {
-        apiKey = {_secret = config.sops.secrets.anime-api.path;};
+        apiKey._secret = config.sops.secrets.anime-api.path;
          hostConfig = {
-          password = {_secret = config.sops.secrets.jelly-pass.path;};
-          username = "admin";
+          password._secret = config.sops.secrets.jelly-pass.path;
         };
       };
     };
@@ -140,43 +131,33 @@ in {
     radarr = {
       enable = true;
       config = {
-        apiKey = {_secret = config.sops.secrets.radarr-api.path;};
+        apiKey._secret = config.sops.secrets.radarr-api.path;
         hostConfig = {
-          password = {_secret = config.sops.secrets.jelly-pass.path;};
-          username = "admin";
+          password._secret = config.sops.secrets.jelly-pass.path;
         };
        };
     };
 
     recyclarr = {
       enable = true;
-      cleanupUnmanagedProfiles = true;
+      cleanupUnmanagedProfiles.enable = true;
     };
 
     lidarr = {
       enable = true;
       config = {
-        apiKey = {_secret = config.sops.secrets.lidarr-api.path;};
+        apiKey._secret = config.sops.secrets.lidarr-api.path;
         hostConfig = {
-          password = {_secret = config.sops.secrets.jelly-pass.path;};
-          username = "admin";
+          password._secret = config.sops.secrets.jelly-pass.path;
         };
        };
     };
 
-    jellyseerr = {
-      enable = false;
-      vpn.enable = true;
-      apiKey = {_secret = config.sops.secrets.seerr-api.path;};
+    seerr = {
+      enable = true;
+      apiKey._secret = config.sops.secrets.seerr-api.path;
     };
 
-    mullvad = {
-      enable = true;
-      accountNumber = {_secret = config.sops.secrets.mullvad-acc.path;};
-      autoConnect = true;
-      location = [ "au" ];
-      killSwitch.enable = true;
-    };
   };
 
   networking.firewall.checkReversePath = "loose";
@@ -187,7 +168,7 @@ in {
       extraSetFlags = [ "--advertise-exit-node" ];
     };
     deluge = {
-      enable = true;
+      enable = false;
       web.enable = true;
       # declarative = true;
       group = "media";
@@ -196,7 +177,7 @@ in {
       #};
     };
     navidrome = {
-      enable = true;
+      enable = false;
       group = "media";
       settings = {
         MusicFolder = "/mnt/storage/media/music";
@@ -214,45 +195,5 @@ nixpkgs.overlays = [ # Fix for Navidrome being busted in version 0.59
   })
 ];
 
-networking.nftables = {
-  enable = true;
-  tables."mullvad-tailscale" = {
-    family = "inet";
-    content = ''
-      chain prerouting {
-        type filter hook prerouting priority -50; policy accept;
-
-        # Allow Tailscale protocol traffic to bypass Mullvad
-        udp dport 41641 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
-
-        # Allow direct mesh traffic (Tailscale device to Tailscale device) to bypass Mullvad
-        ip saddr 100.64.0.0/10 ip daddr 100.64.0.0/10 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
-
-        # Exit node traffic: DON'T mark it - let it route through VPN without bypass mark
-        # Clear meta mark so it routes through Mullvad (no ct mark means Mullvad won't drop in NAT)
-        iifname "tailscale0" ip daddr != 100.64.0.0/10 meta mark set 0;
-
-        # Return traffic from VPN: Mark it so it routes via Tailscale table
-        # Use bypass mark so it doesn't get routed back through Mullvad
-        iifname "wg0-mullvad" ip daddr 100.64.0.0/10 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
-      }
-
-      chain outgoing {
-        type route hook output priority -100; policy accept;
-        meta mark 0x80000 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
-        ip daddr 100.64.0.0/10 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
-        # Allow outgoing UDP from Tailscale port to bypass Mullvad
-        udp sport 41641 ct mark set 0x00000f41 meta mark set 0x6d6f6c65;
-      }
-
-      chain postrouting {
-        type nat hook postrouting priority 100; policy accept;
-
-        # Masquerade exit node traffic going through Mullvad
-        iifname "tailscale0" oifname "wg0-mullvad" masquerade;
-      }
-    '';
-  };
-};
 
 }

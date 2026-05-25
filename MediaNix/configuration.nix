@@ -15,6 +15,58 @@
 
   networking.hostName = "MediaNix"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
+  services.xserver.enable = true;
+  services.xserver.desktopManager.kodi.enable = true;
+  services.xserver.displayManager.autoLogin.enable = true;
+  services.xserver.displayManager.autoLogin.user = "kodi";
+
+  services.xserver.displayManager.lightdm.greeter.enable = false;
+
+  # Define a user account
+  users.extraUsers.kodi.isNormalUser = true;
+
+  # use alsa; which supports hdmi passthrough
+  services.pulseaudio.enable = false;
+  services.pipewire.enable = false;
+
+  environment.systemPackages = with pkgs; [
+    kodi-gbm
+    seaweedfs
+  ];
+
+  users.users = {
+    kodi = {
+      initialHashedPassword = "passwordHash";
+      extraGroups = [
+        # allow kodi access to keyboards
+        "input"
+      ];
+      isNormalUser = true;
+    };
+  };
+
+
+  # auto-login and launch kodi
+  services.getty.autologinUser = "kodi";
+  services.greetd = {
+    enable = true;
+    settings = {
+      initial_session = {
+        command = "${pkgs.kodi-gbm}/bin/kodi-standalone";
+        user = "kodi";
+      };
+      default_session = {
+        command = "${pkgs.greetd.greetd}/bin/agreety --cmd sway";
+      };
+    };
+  };
+
+  programs.sway = {
+    enable = true;
+    xwayland.enable = false;
+  };
+
+
 
   users.users.admin = {
     isNormalUser = true;
@@ -93,13 +145,6 @@
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
-
-  # List packages installed in system profile. To search, run:
-  # $ nix search wget
-  environment.systemPackages = with pkgs; [
-  #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
-  #  wget
-  ];
 
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
