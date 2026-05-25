@@ -16,11 +16,12 @@ let
       });
     });
   };
+  pkgs-xr = import sources.nixpkgs-xr;
 in {
   services.monado = {
     enable = true;
     defaultRuntime = true; # Register as default OpenXR runtime
-    package = pkgs.monado.overrideAttrs (finalAttrs: previousAttrs: { src = sources.monado.outPath; patches = []; }); #rayneo driver fork
+    # package = pkgs.monado.overrideAttrs (finalAttrs: previousAttrs: { src = sources.monado.outPath; patches = []; }); #rayneo driver fork
   };
   systemd.user.services.monado.environment = {
     STEAMVR_LH_ENABLE = "1";
@@ -28,7 +29,8 @@ in {
   };
 
  nixpkgs.overlays = [
-   kde-over
+   # kde-over
+   pkgs-xr.overlays.default
  ];
 
   environment.systemPackages = with pkgs; [

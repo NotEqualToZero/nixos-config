@@ -8,9 +8,11 @@ imports = [
   ../nixos/gaming.nix
   ../nixos/dwl.nix
   ../nixos/printing.nix
-# ../nixos/vr.nix
+  ../nixos/vr.nix
 ];
 
+virtualisation.waydroid.enable = true;
+programs.kdeconnect.enable = true;
 
 #services.xserver.windowManager.dwl.enable = true;
 users.users.cale = {
@@ -24,7 +26,13 @@ users.users.cale = {
     "dialout"
   ];
   packages = with pkgs; [
+    mu
+    mu.mu4e
+    isync
+    msmtp
     obsidian
+    kitty
+    moonlight-qt
     google-chrome
     st
     vlc
@@ -72,6 +80,8 @@ services.i2pd = {
     };
   };
 };
+
+programs.hyprland.enable = true;
 
 environment.variables = { SOPS_AGE_KEY_CMD="op read op://Private/Sops-Nix/password"; };
 
