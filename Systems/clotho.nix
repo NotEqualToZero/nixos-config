@@ -5,6 +5,9 @@
     [ (modulesPath + "/installer/scan/not-detected.nix")
     ];
 
+  environment.systemPackages = with pkgs; [
+    seaweedfs
+  ];
 
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -30,9 +33,16 @@
     };
 
 
+#  fileSystems."/storage" =
+#    { device = "/dev/disk/by-uuid/43148269-cf88-40c4-86f5-d62906998df1";
+#      fsType = "btrfs";
+#      options = [ "nofail" ];
+#    };
+
   fileSystems."/storage" =
-    { device = "/dev/disk/by-uuid/43148269-cf88-40c4-86f5-d62906998df1";
+    { device = "/dev/disk/by-uuid/4ba1b84e-276b-4d31-b604-8e9f24e8b6db";
       fsType = "btrfs";
+      options = [ "nofail" "users" "fmask=0777" "dmask=0777"];
     };
 
   swapDevices =

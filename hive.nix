@@ -123,7 +123,7 @@ in {
     };
   };
 
-  MediaNix= { name, nodes, ... }: {
+  Circe = { name, nodes, ... }: {
     imports = [
       #./nixos/Media.nix
       ./MediaNix/configuration.nix
@@ -131,7 +131,7 @@ in {
 
     deployment = {
       # buildOnTarget = true;
-      targetHost = "medianix";
+      targetHost = "circe";
       targetUser = "admin";
     };
   };

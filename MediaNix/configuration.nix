@@ -13,7 +13,7 @@
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  networking.hostName = "MediaNix"; # Define your hostname.
+  hardware.xpadneo.enable = true;
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
   services.xserver.enable = true;
   services.xserver.desktopManager.kodi.enable = true;

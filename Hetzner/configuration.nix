@@ -14,6 +14,10 @@
     ../nixos/garagefs.nix
   ];
 
+  environment.systemPackages = with pkgs; [
+    seaweedfs
+  ];
+
   sops.secrets = {
     tailscale-manage= {};
   };

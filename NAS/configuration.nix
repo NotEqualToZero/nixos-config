@@ -123,6 +123,8 @@ in {
     openFirewall = true;
   };
 
+  programs.fuse.userAllowOther = true;
+
   environment.systemPackages = with pkgs; [
     tailscale
     ssh-to-age
@@ -131,6 +133,7 @@ in {
     ranger
     s3fs
     fuse
+    seaweedfs
   ];
 
   services.restic.backups = {
