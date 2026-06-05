@@ -59,7 +59,7 @@ in {
 #    };
 #   };
 
-   Hades2 = { name, nodes, ... }: {
+  Hades2 = { name, nodes, ... }: {
     imports = [
       ./Hades/configuration.nix
       ./Hades/Cale.nix
@@ -70,10 +70,20 @@ in {
       allowLocalDeployment = true;
       targetHost = null;
     };
-
-
-
   };
+
+
+  Mnemosyne = { name, nodes, ... }: {
+    imports = [
+      ./Systems/Mnemosyne.nix
+    ];
+
+    deployment = {
+      targetHost = "mnemosyne";
+      targetUser = "admin";
+    };
+  };
+
   NAS = { name, nodes, ... }: {
     imports = [
       ./NAS/configuration.nix

@@ -1,76 +1,56 @@
-{ config, pkgs, ... }:
+{ config, sources, pkgs, ... }:
 
 {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
       ../nixos/garagefs.nix
+      (sources.nixos-hardware + "/common/cpu/intel/alder-lake" )
     ];
   sops.secrets = {
   };
 
-  # Bootloader.
+  # Enable Plasma
+  services.desktopManager.plasma6.enable = true;
+
+  # Default display manager for Plasma
+  services.displayManager.sddm = {
+    enable = true;
+
+  # To use Wayland (Experimental for SDDM)
+    wayland.enable = true;
+  };
+
+  virtualisation.incus.enable = true;
+  networking.firewall.trustedInterfaces = [ "incusbr0" ];
+
+  # Optionally enable xserver
+  services.xserver.enable = true;  # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+  # Enable sound.
+  services.pipewire = {
+    enable = true; # if not already enabled
+    alsa.enable = true;
+    alsa.support32Bit = true;
+    pulse.enable = true;
+    # If you want to use JACK applications, uncomment the following
+    jack.enable = true;
+    wireplumber.enable = true;
+  };
+  # Enable 3D graphics.
+  hardware.opengl.enable = true;
+  hardware.bluetooth.enable = true;
 
   hardware.xpadneo.enable = true;
-  # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
-  services.xserver.enable = true;
-  services.xserver.desktopManager.kodi.enable = true;
-  services.xserver.displayManager.autoLogin.enable = true;
-  services.xserver.displayManager.autoLogin.user = "kodi";
-
-  services.xserver.displayManager.lightdm.greeter.enable = false;
-
-  # Define a user account
-  users.extraUsers.kodi.isNormalUser = true;
-
-  # use alsa; which supports hdmi passthrough
-  services.pulseaudio.enable = false;
-  services.pipewire.enable = false;
-
   environment.systemPackages = with pkgs; [
-    kodi-gbm
     seaweedfs
   ];
-
-  users.users = {
-    kodi = {
-      initialHashedPassword = "passwordHash";
-      extraGroups = [
-        # allow kodi access to keyboards
-        "input"
-      ];
-      isNormalUser = true;
-    };
-  };
-
-
-  # auto-login and launch kodi
-  services.getty.autologinUser = "kodi";
-  services.greetd = {
-    enable = true;
-    settings = {
-      initial_session = {
-        command = "${pkgs.kodi-gbm}/bin/kodi-standalone";
-        user = "kodi";
-      };
-      default_session = {
-        command = "${pkgs.greetd.greetd}/bin/agreety --cmd sway";
-      };
-    };
-  };
-
-  programs.sway = {
-    enable = true;
-    xwayland.enable = false;
-  };
-
-
+  # Define a user account. Don't forget to set a password with ‘mkpasswd -m sha-512’.
 
   users.users.admin = {
     isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "incus"];
 
     openssh.authorizedKeys.keys = [
       "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMUgqWiEREHr5rZb3zfLuPf3i+Q8fW00TqHZvDJjcIyG"
