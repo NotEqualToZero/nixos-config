@@ -7,7 +7,7 @@ in {
     # - A path to a Nixpkgs checkout
     # - The Nixpkgs lambda (e.g., import <nixpkgs>)
     # - An initialized Nixpkgs attribute set
-    nixpkgs = import sources."25.11" ; #npins default nixpkgs currently 25.05 11/09/25
+    nixpkgs = import sources."nixos-26.05" ; #npins default nixpkgs currently 26.05 11/06/26
     nodeNixpkgs = {
 #     Hades = import sources.pkgs-uns;
 #     Heracles = import sources.pkgs-uns;
@@ -84,30 +84,30 @@ in {
     };
   };
 
-  NAS = { name, nodes, ... }: {
-    imports = [
-      ./NAS/configuration.nix
-    ];
-
-    deployment = {
-      #buildOnTarget = true;
-      targetHost = "nas";
-      targetUser = "admin";
-    };
-  };
-
-  Paperless = { name, nodes, ... }: {
-    imports = [
-      ./template/proxmox-lxc.nix
-      ./nixos/paperless.nix
-    ];
-
-    deployment = {
-      #buildOnTarget = true;
-      targetHost = "papernix";
-      targetUser = "admin";
-    };
-  };
+#  NAS = { name, nodes, ... }: {
+#    imports = [
+#      ./NAS/configuration.nix
+#    ];
+#
+#    deployment = {
+#      #buildOnTarget = true;
+#      targetHost = "nas";
+#      targetUser = "admin";
+#    };
+#  };
+#
+#  Paperless = { name, nodes, ... }: {
+#    imports = [
+#      ./template/proxmox-lxc.nix
+#      ./nixos/paperless.nix
+#    ];
+#
+#    deployment = {
+#      #buildOnTarget = true;
+#      targetHost = "papernix";
+#      targetUser = "admin";
+#    };
+#  };
 
 #  Heracles = { name, nodes, ... }: {
 #    imports = [
@@ -146,18 +146,18 @@ in {
     };
   };
 
-  Factorio = { name, nodes, ... }: {
-    imports = [
-      ./nixos/factorio.nix
-      ./template/proxmox-lxc.nix
-    ];
-
-    deployment = {
-      # buildOnTarget = true;
-      targetHost = "factorio";
-      targetUser = "admin";
-    };
-  };
+#  Factorio = { name, nodes, ... }: {
+#    imports = [
+#      ./nixos/factorio.nix
+#      ./template/proxmox-lxc.nix
+#    ];
+#
+#    deployment = {
+#      # buildOnTarget = true;
+#      targetHost = "factorio";
+#      targetUser = "admin";
+#    };
+#  };
 
   clotho = { name, nodes, ... }: {
     imports = [
