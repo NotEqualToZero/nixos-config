@@ -20,11 +20,20 @@ in
   imports =
     [ # Include the results of the hardware scan.
       (modulesPath + "/installer/scan/not-detected.nix")
+      ../modules/Paperless.nix
+      ../modules/Incus.nix
     ];
-
+  sops.secrets = {
+  };
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  services.paperless = {
+    dataDir = "/tank/Paperless";
+  };
+
+  boot.zfs.extraPools = [ "tank" ];
 
   networking.hostName = "Mnemosyne"; # Define your hostname.
   # networking.wireless.enable = true;  # Enables wireless support via wpa_supplicant.
