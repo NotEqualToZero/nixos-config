@@ -22,6 +22,9 @@ in
       (modulesPath + "/installer/scan/not-detected.nix")
       ../modules/Paperless.nix
       ../modules/Incus.nix
+      ../nixos/gaming.nix
+      ../NAS/remote-builder.nix
+      ../modules/Sunshine.nix
     ];
   sops.secrets = {
   };
