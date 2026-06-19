@@ -30,7 +30,7 @@ in {
     config = {
       networking.hostName = name;
       environment.systemPackages = with pkgs; [
-        wget npins tmux
+        wget npins tmux git
       ];
 
 

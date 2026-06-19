@@ -15,6 +15,7 @@ let
       builtins.attrValues zfsCompatibleKernelPackages
     )
   );
+  odysseus = import sources.odysseus-nix;
 in
 {
   imports =
@@ -25,12 +26,28 @@ in
       ../nixos/gaming.nix
       ../NAS/remote-builder.nix
       ../modules/Sunshine.nix
+      odysseus.nixosModules.default
+      ../modules/llama-swap-config.nix
     ];
   sops.secrets = {
   };
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
+
+  services.odysseus = {
+    enable = true;
+    host = "0.0.0.0";
+    dataDir = "/tank/Models/Odysseus";
+    #envFile = "/etc/odysseus/env";  # your API keys / secrets
+    extraEnv = {
+      SEARXNG_INSTANCE = "http://localhost:8080";
+    };
+
+    gpuBackend = "vulkan";
+    gpuPciId   = "1002:744c";   # 7900XTX
+  };
+
 
   services.paperless = {
     dataDir = "/tank/Paperless";
@@ -80,6 +97,7 @@ in
     variant = "";
   };
 
+
   # Enable CUPS to print documents.
   services.printing.enable = true;
 
@@ -124,6 +142,8 @@ in
   environment.systemPackages = with pkgs; [
   #  vim # Do not forget to add an editor to edit configuration.nix! The Nano editor is also installed by default.
   #  wget
+    fclones
+    python3
   ];
 
   # Some programs need SUID wrappers, can be configured further or are
@@ -155,11 +175,16 @@ in
 
   services.tailscale = {
     enable = true;
+    useRoutingFeatures = "both";
+    extraSetFlags = [
+      "--advertise-routes=10.0.100.0/24"
+      "--advertise-exit-node"
+    ];
   };
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" ];
+  boot.kernelModules = [ "kvm-amd" "amdgpu" ];
   boot.extraModulePackages = [ ];
 
   # ZFS support
@@ -183,4 +208,30 @@ in
 
   nixpkgs.hostPlatform = lib.mkDefault "x86_64-linux";
   hardware.cpu.amd.updateMicrocode = lib.mkDefault config.hardware.enableRedistributableFirmware;
+
+
+  # below was added to try get intergrated graphics working on incus vm's
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+    extraPackages = with pkgs; [
+      rocmPackages.clr.icd   # OpenCL via ROCm
+    ];
+  };
+
+  boot.kernelParams = [
+    "ttm.pages_limit=21484375"
+    "ttm.page_pool_size=5859375"
+    "amd_iommu=on"
+    "iommu=pt"
+ ];
+
+  nixpkgs.config.rocmSupport = true;
+  # hardware.amdgpu.opencl.enable = true;
+
+  boot.extraModprobeConfig = ''
+    options amdgpu sriov_vf_count=1
+    options amdgpu runpm=0
+    '';
+
 }
