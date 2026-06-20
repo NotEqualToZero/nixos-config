@@ -43,11 +43,28 @@ in
     extraEnv = {
       SEARXNG_INSTANCE = "http://localhost:8080";
     };
-
+    optionalDeps.duckduckgo = true;
     gpuBackend = "vulkan";
     gpuPciId   = "1002:744c";   # 7900XTX
   };
 
+  services.searx = {
+    enable = true;
+    configureUwsgi = false;
+    redisCreateLocally = true;
+    settings = {
+      general = {
+        bind_address = "127.0.0.1";
+        port = 8080;
+        secret_key = "tesring";
+      };
+      search = {
+        safe_search = 0;
+        languages = [ "auto" ];
+        formats = [ "json" ];
+      };
+    };
+  };
 
   services.paperless = {
     dataDir = "/tank/Paperless";
