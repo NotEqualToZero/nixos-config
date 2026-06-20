@@ -30,6 +30,7 @@ in
       ../modules/llama-swap-config.nix
     ];
   sops.secrets = {
+    searxng-key = {};
   };
   # Bootloader.
   boot.loader.systemd-boot.enable = true;
@@ -56,7 +57,7 @@ in
       general = {
         bind_address = "127.0.0.1";
         port = 8080;
-        secret_key = "tesring";
+        secret_key = config.sops.secrets.searxng-key.path;
       };
       search = {
         safe_search = 0;
