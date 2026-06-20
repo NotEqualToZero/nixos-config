@@ -10,16 +10,20 @@
 { config, pkgs, lib, ... }:
 
 let
-  # Vulkan-flavored llama-cpp (sidesteps the ROCm/HSA iGPU enumeration issue).
-  # Prefer the dedicated `llama-cpp-vulkan` attribute when the pinned nixpkgs
-  # provides it (most do); fall back to overriding the base package. Using the
-  # named attribute is more robust across pkgs sets (e.g. colmena/npins-pinned
-  # nixpkgs) where a bare `.override { vulkanSupport = true; }` can evaluate to
-  # the plain CPU build.
-  llama-cpp-gpu =
-    if pkgs ? llama-cpp-vulkan
-    then pkgs.llama-cpp-vulkan
-    else pkgs.llama-cpp.override { vulkanSupport = true; };
+  # Vulkan-flavored llama-cpp. We build it explicitly with vulkanSupport ON and
+  # rocmSupport/cudaSupport OFF. This is essential because this host sets a
+  # global `nixpkgs.config.rocmSupport = true` (for the Incus/iGPU OpenCL
+  # setup), which propagates into EVERY package build — including llama-cpp and
+  # even its "vulkan" variant. A ROCm-enabled llama-server prefers the ROCm
+  # backend, and on this Strix Point + 7900XTX box ROCm/HSA enumeration fails,
+  # so it silently falls back to CPU. Forcing rocmSupport = false in the
+  # override produces a clean Vulkan-only binary that actually uses the GPU,
+  # regardless of the global config.
+  llama-cpp-gpu = pkgs.llama-cpp.override {
+    vulkanSupport = true;
+    rocmSupport   = false;
+    cudaSupport   = false;
+  };
   llama-server  = lib.getExe' llama-cpp-gpu "llama-server";
 
   # GPU env baked directly into each model command. Relying on the systemd
@@ -71,6 +75,7 @@ in
             "--no-webui"
           ];
         };
+
       };
     };
   };
@@ -88,13 +93,37 @@ in
     ProcSubset  = lib.mkForce "all";
     ProtectProc = lib.mkForce "default";
 
-    # GPU device access (the native hardening doesn't grant these).
-    PrivateDevices      = lib.mkForce false;
-    DeviceAllow         = [ "/dev/dri rw" "/dev/kfd rw" ];
+    # GPU device access. NOTE: `DeviceAllow=/dev/dri rw` (a directory path) does
+    # NOT grant access to the character devices inside it (renderD128, card1) —
+    # systemd needs device-class or specific-node rules. `char-drm` covers all
+    # DRM render/card nodes; /dev/kfd is the ROCm/KFD compute node. Without
+    # this, the GPU is invisible to the service even though file permissions
+    # and groups are correct, and llama-server silently falls back to CPU.
+    PrivateDevices = lib.mkForce false;
+    DeviceAllow = lib.mkForce [
+      "char-drm rw"      # all /dev/dri/renderD* and card* nodes
+      "/dev/kfd rw"      # AMD KFD compute node
+    ];
     SupplementaryGroups = [ "render" "video" ];
 
     # The native module restricts filesystem access; allow reading the models.
     ReadOnlyPaths = [ "/tank/Models/Odysseus" ];
+
+    # --- GPU/Vulkan compatibility ---
+    # The ONLY thing the native module's hardening got wrong for GPU use was the
+    # device cgroup (fixed by char-drm above) and hiding /proc (fixed above).
+    # RADV works fine under the rest of the native hardening — confirmed by a
+    # systemd-run test with full defaults + only the device fix. So we keep the
+    # native module's MemoryDenyWriteExecute, RestrictNamespaces, ProtectKernel*,
+    # etc. and don't weaken them. The one extra: MemoryDenyWriteExecute can block
+    # RADV's shader JIT on some driver versions, so leave it relaxed as a
+    # belt-and-braces measure (cheap, and shader compilation genuinely needs W^X
+    # exceptions on some stacks).
+    MemoryDenyWriteExecute = lib.mkForce false;
+    # The native module sets PrivateUsers=yes, which remaps UIDs so the
+    # render/video supplementary groups don't apply to the GPU device nodes.
+    # Turn it off so group-based device access works.
+    PrivateUsers = lib.mkForce false;
   };
 
   # GPU selection env for the llama-swap service.

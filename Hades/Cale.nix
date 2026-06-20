@@ -9,7 +9,11 @@ imports = [
   ../nixos/dwl.nix
   ../nixos/printing.nix
   ../nixos/vr.nix
+#  ../modules/odysseus.nix
+  ../modules/nix-ld.nix
 ];
+
+#odysseus.enable = true;
 
 virtualisation.waydroid.enable = true;
 programs.kdeconnect.enable = true;
@@ -24,10 +28,12 @@ users.users.cale = {
     "scanner"
     "lp"
     "dialout"
+    "podman"
   ];
   packages = with pkgs; [
     mu
     mu.mu4e
+    uv
     isync
     msmtp
     obsidian
@@ -63,6 +69,14 @@ users.users.cale = {
     libreoffice-qt-still
     (librewolf.override { cfg.enablePlasmaBrowserIntegration = true; })
   ];
+};
+virtualisation = {
+  containers.enable = true;
+  podman = {
+    enable = true;
+    dockerCompat = true;
+    defaultNetwork.settings.dns_enabled = true; # Required for containers under podman-compose to be able to talk to each other.
+  };
 };
 
 services.i2pd = {
