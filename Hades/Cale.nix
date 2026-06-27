@@ -15,6 +15,11 @@ imports = [
 
 #odysseus.enable = true;
 
+nixpkgs.config.permittedInsecurePackages = [
+  "librewolf-151.0.2-1" # No active committers in nixpkgs? wondering if unstable issue need to address obvs
+  "librewolf-unwrapped-151.0.2-1"
+];
+
 virtualisation.waydroid.enable = true;
 programs.kdeconnect.enable = true;
 
@@ -31,6 +36,8 @@ users.users.cale = {
     "podman"
   ];
   packages = with pkgs; [
+    sshfs
+    emacsPackages.mu4e
     mu
     mu.mu4e
     uv

@@ -41,6 +41,10 @@
   ];
   nix.distributedBuilds = true;
 
+  environment.systemPackages = with pkgs; [
+    busybox
+  ];
+
   services.openssh = {
     enable = true;
     passwordAuthentication = false;

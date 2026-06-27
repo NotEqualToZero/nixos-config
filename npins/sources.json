@@ -14,6 +14,19 @@
       "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.12168.d6df3513510a/nixexprs.tar.xz",
       "hash": "sha256-ptZx/lEknBXBijfdXJdzJfZEQf7xq9umG3szmM3j5vo="
     },
+    "ds4": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "antirez",
+        "repo": "ds4"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "80ebbc396aee40eedc1d829222f3362d10fa4c6c",
+      "url": "https://github.com/antirez/ds4/archive/80ebbc396aee40eedc1d829222f3362d10fa4c6c.tar.gz",
+      "hash": "sha256-Ieuc72GHZs20ModQfnvI5Me31n4Pj+WFYtsuqaKJceo="
+    },
     "jw-st": {
       "type": "Git",
       "repository": {
@@ -111,6 +124,19 @@
       "revision": "764568f104fa089f7f3deb20d4aeb745ce88c6dd",
       "url": "https://github.com/nix-community/nixpkgs-xr/archive/764568f104fa089f7f3deb20d4aeb745ce88c6dd.tar.gz",
       "hash": "sha256-5lOZqsXQ33R6/LGzcoRQc1Cn90nZwMMJu8rrk11M94Q="
+    },
+    "ody-nix-dev": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NotEqualToZero",
+        "repo": "odysseus-nix"
+      },
+      "branch": "dev",
+      "submodules": false,
+      "revision": "d753839e6b55f17f421cc2c86f6754ce8c68b735",
+      "url": "https://github.com/NotEqualToZero/odysseus-nix/archive/d753839e6b55f17f421cc2c86f6754ce8c68b735.tar.gz",
+      "hash": "sha256-yTSADiKp//1mEdHotridul7N+D60fHVg/XXBKOONYo8="
     },
     "odysseus-nix": {
       "type": "Git",

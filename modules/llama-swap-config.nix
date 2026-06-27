@@ -71,11 +71,59 @@ in
             "--host 127.0.0.1"
             "-m ${hub}/models--unsloth--Qwen3.6-27B-GGUF/snapshots/82d411acf4a06cfb8d9b073a5211bf410bfc29bf/Qwen3.6-27B-Q4_K_M.gguf"
             "-ngl 99"
-            "-c 20000"
+            "-c 98304"
+            "-fa on"
+            "--cache-type-k q8_0"
+            "--cache-type-v q8_0"
             "--no-webui"
           ];
         };
 
+        # ── Qwen3.6 35B-A3B (MoE, 3B active) — non-MTP build, single file ──
+        # UD-Q4_K_M ≈ 20GB. MoE → fast despite 35B total. temp/top-p/top-k per Qwen.
+        "qwen3.6-35b-a3b" = {
+          cmd = lib.concatStringsSep " " [
+            gpuEnv
+            llama-server
+            "--port \${PORT}"
+            "--host 127.0.0.1"
+            "-m ${hub}/models--unsloth--Qwen3.6-35B-A3B-GGUF/snapshots/a483e9e6cbd595906af30beda3187c2663a1118c/Qwen3.6-35B-A3B-UD-Q4_K_M.gguf"
+            "-ngl 99"
+            "-c 49152"
+            "-fa on"
+            "--cache-type-k q8_0"
+            "--cache-type-v q8_0"
+            "--temp 1.0"
+            "--top-p 0.95"
+            "--top-k 20"
+            "--jinja"
+            "--no-webui"
+          ];
+        };
+
+        # ── Gemma-4 12B coder (fable5 composer fine-tune) ──
+        # Using Q8_0 (~13GB, near-lossless) — a 12B fits the 24GB card with room to
+        # spare, so no reason to use the lower quants (Q6_K/Q4_K_M/Q3_K_M/Q2_K also
+        # cached if you want a smaller footprint). Gemma sampling: 1.0 / 0.95 / 64.
+        "gemma4-12b-coder" = {
+          cmd = lib.concatStringsSep " " [
+            gpuEnv
+            llama-server
+            "--port \${PORT}"
+            "--host 127.0.0.1"
+            "-m ${hub}/models--yuxinlu1--gemma-4-12B-coder-fable5-composer2.5-v1-GGUF/snapshots/1380be1796e559fca96b4107599285cab3ddbb92/gemma4-coding-Q8_0.gguf"
+            "-ngl 99"
+            "-c 65536"
+            "-fa on"
+            "--cache-type-k q8_0"
+            "--cache-type-v q8_0"
+            "--temp 1.0"
+            "--top-p 0.95"
+            "--top-k 64"
+            "--jinja"
+            "--no-webui"
+          ];
+        };
       };
     };
   };
