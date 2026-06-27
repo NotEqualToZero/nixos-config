@@ -134,9 +134,9 @@
       },
       "branch": "dev",
       "submodules": false,
-      "revision": "d753839e6b55f17f421cc2c86f6754ce8c68b735",
-      "url": "https://github.com/NotEqualToZero/odysseus-nix/archive/d753839e6b55f17f421cc2c86f6754ce8c68b735.tar.gz",
-      "hash": "sha256-yTSADiKp//1mEdHotridul7N+D60fHVg/XXBKOONYo8="
+      "revision": "58ca8f0760da801b169a124b1b3ca23e8e0b3c22",
+      "url": "https://github.com/NotEqualToZero/odysseus-nix/archive/58ca8f0760da801b169a124b1b3ca23e8e0b3c22.tar.gz",
+      "hash": "sha256-VmwyxjaKZUPn20uBpr+JEj/vV4I5/KZ+VmXvEfUMmw4="
     },
     "odysseus-nix": {
       "type": "Git",

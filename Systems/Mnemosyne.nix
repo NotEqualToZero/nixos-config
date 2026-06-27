@@ -15,7 +15,6 @@ let
       builtins.attrValues zfsCompatibleKernelPackages
     )
   );
-  odysseus = import sources.ody-nix-dev;
 in
 {
   imports =
@@ -26,7 +25,7 @@ in
       ../nixos/gaming.nix
       ../NAS/remote-builder.nix
       ../modules/Sunshine.nix
-      odysseus.nixosModules.default
+      (import sources.ody-nix-dev).nixosModules.default
       ../modules/llama-swap-config.nix
       ../modules/dwarfstar/module.nix
     ];
@@ -47,8 +46,6 @@ in
       SEARXNG_INSTANCE = "http://localhost:8080";
     };
     optionalDeps.duckduckgo = true;
-    gpuBackend = "vulkan";
-    gpuPciId   = "1002:744c";   # 7900XTX
 
     backendPackages = [
       (pkgs.llama-cpp.override { vulkanSupport = true; })
