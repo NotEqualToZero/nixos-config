@@ -28,6 +28,7 @@ in
       (import sources.ody-nix-dev).nixosModules.default
       ../modules/llama-swap-config.nix
       ../modules/dwarfstar/module.nix
+      ../modules/Restic.nix
     ];
   sops.secrets = {
     searxng-key = {};
@@ -43,30 +44,33 @@ in
     group = "collab";
     #envFile = "/etc/odysseus/env";  # your API keys / secrets
     extraEnv = {
-      SEARXNG_INSTANCE = "http://localhost:8080";
     };
     optionalDeps.duckduckgo = true;
 
     backendPackages = [
       (pkgs.llama-cpp.override { vulkanSupport = true; })
     ];
+    extraLibPaths = [ "/run/opengl-driver/lib" ];
 
     extraEnv = {
       # Pin RADV to the 7900 XTX by PCI ID (robust on mixed iGPU+dGPU)
       MESA_VK_DEVICE_SELECT = "1002:744c";
+      SEARXNG_INSTANCE = "http://localhost:8080";
       # Use only the AMD RADV ICD; skip freedreno/Turnip/panfrost/llvmpipe
       VK_ICD_FILENAMES = "/run/opengl-driver/share/vulkan/icd.d/radeon_icd.x86_64.json";
+      HSA_OVERRIDE_GFX_VERSION = "11.0.0";
+      VLLM_LOGGING_LEVEL="DEBUG";
     };
   };
 
   # Grant the odysseus service user access to the GPU render nodes.
 
   # Expose /dev/dri and /dev/kfd to the service.
-  systemd.services.odysseus.serviceConfig = {
-    PrivateDevices      = false;
-    DeviceAllow         = [ "/dev/dri rw" "/dev/kfd rw" ];
-    SupplementaryGroups = [ "render" "video" ];
-  };
+#  systemd.services.odysseus.serviceConfig = {
+#    PrivateDevices      = false;
+#    DeviceAllow         = [ "/dev/dri rw" "/dev/kfd rw" ];
+#    SupplementaryGroups = [ "render" "video" ];
+#  };
 
   services.ds4 = {
     enable = true;
@@ -304,7 +308,7 @@ in
 
   boot.initrd.availableKernelModules = [ "nvme" "xhci_pci" "thunderbolt" "usb_storage" "sd_mod" ];
   boot.initrd.kernelModules = [ ];
-  boot.kernelModules = [ "kvm-amd" "amdgpu" ];
+  boot.kernelModules = [ "kvm-amd" "amdkfd" "amdgpu" ];
   boot.extraModulePackages = [ ];
 
   # ZFS support
@@ -336,6 +340,7 @@ in
     enable32Bit = true;
     extraPackages = with pkgs; [
       rocmPackages.clr.icd   # OpenCL via ROCm
+      rocmPackages.clr
     ];
   };
 
