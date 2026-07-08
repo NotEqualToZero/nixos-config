@@ -73,7 +73,7 @@ in
 #  };
 
   services.ds4 = {
-    enable = true;
+    enable = false;
     src    = sources.ds4;
     gpuArch = "gfx1150";          # confirmed from gfx_target_version 110500
 
@@ -253,6 +253,14 @@ in
 
   };
 
+  users.users.krysis = {
+    isNormalUser = true;
+    description = "johnny";
+    packages = with pkgs; [
+      prismlauncher
+
+    ];
+  };
 
 
   # Install firefox.
