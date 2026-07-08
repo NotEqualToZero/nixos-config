@@ -14,15 +14,19 @@ imports = [
 ];
 
 #odysseus.enable = true;
+services.flatpak.enable = true;
 
 nixpkgs.config.permittedInsecurePackages = [
   "librewolf-151.0.2-1" # No active committers in nixpkgs? wondering if unstable issue need to address obvs
   "librewolf-unwrapped-151.0.2-1"
 ];
 
+xdg.portal.configPackages = [ pkgs.kdePackages.plasma-bigscreen ];
+services.displayManager.sessionPackages = [
+  pkgs.kdePackages.plasma-bigscreen
+];
 virtualisation.waydroid.enable = true;
 programs.kdeconnect.enable = true;
-
 #services.xserver.windowManager.dwl.enable = true;
 users.users.cale = {
   isNormalUser = true;
@@ -38,6 +42,10 @@ users.users.cale = {
   packages = with pkgs; [
     sshfs
     emacsPackages.mu4e
+    kdePackages.plasma-bigscreen
+    apx
+    bazaar
+    apx-gui
     mu
     mu.mu4e
     uv
