@@ -88,9 +88,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "782a2e98a10ca1a436ee8b26153d79d7efb9323f",
-      "url": "https://github.com/kiriwalawren/nixflix/archive/782a2e98a10ca1a436ee8b26153d79d7efb9323f.tar.gz",
-      "hash": "sha256-GlIb8yRz/of1UDvlEK6rUmcSzdxrwgxFjYZ/nbdkFtk="
+      "revision": "2aa1d080f760584d1205575f730525349f5c38cb",
+      "url": "https://github.com/kiriwalawren/nixflix/archive/2aa1d080f760584d1205575f730525349f5c38cb.tar.gz",
+      "hash": "sha256-JbzDiK4lQ+Wt7cAC3rhaG+PBnv5OHVMMHgGKUoxWjaA="
     },
     "nixos-26.05": {
       "type": "Channel",

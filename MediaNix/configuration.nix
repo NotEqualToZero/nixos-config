@@ -1,11 +1,14 @@
 { config, sources, pkgs, ... }:
-
-{
+let
+   nixflix = import sources.nixflix { inherit pkgs; };
+in {
   imports =
     [ # Include the results of the hardware scan.
       ./hardware-configuration.nix
-      ../nixos/garagefs.nix
+#     ../nixos/garagefs.nix
       (sources.nixos-hardware + "/common/cpu/intel/alder-lake" )
+      nixflix.nixosModules.default
+      ../modules/Nixflix.nix
     ];
   sops.secrets = {
   };
@@ -61,15 +64,15 @@
     ];
   };
 
-  services.garage = {
-    enable = true;
-    settings = {
-      data_dir = [
-        { capacity = "3T"; path = "/mnt/storage/garage/data"; }
-      ];
-      rpc_public_addr = "[fd7a:115c:a1e0::c935:7c75]:3901";
-    };
-  };
+#  services.garage = {
+#    enable = true;
+#    settings = {
+#      data_dir = [
+#        { capacity = "3T"; path = "/mnt/storage/garage/data"; }
+#      ];
+#      rpc_public_addr = "[fd7a:115c:a1e0::c935:7c75]:3901";
+#    };
+#  };
 
   services.openssh = {
     enable = true;
