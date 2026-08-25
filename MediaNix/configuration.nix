@@ -13,15 +13,60 @@ in {
   sops.secrets = {
   };
 
+
   # Enable Plasma
   services.desktopManager.plasma6.enable = true;
 
-  # Default display manager for Plasma
-  services.displayManager.sddm = {
-    enable = true;
+  xdg.portal.configPackages = [ pkgs.kdePackages.plasma-bigscreen ];
 
-  # To use Wayland (Experimental for SDDM)
-    wayland.enable = true;
+  environment.systemPackages = with pkgs; [
+    kdePackages.plasma-bigscreen
+  ];
+
+  services.displayManager = {
+    defaultSession = "plasma-bigscreen-wayland";
+    sessionPackages = [ pkgs.kdePackages.plasma-bigscreen ];
+    sddm = {
+      enable = true;
+      wayland.enable = true;
+      enableHidpi = true;
+      settings = {
+        Autologin = {
+#          Session = "plasma.desktop";
+          User = "ash";
+        };
+      };
+    };
+  };
+
+  services.syncthing = {
+    enable = true;
+    openDefaultPorts = true;
+    guiAddress = "0.0.0.0:8385";
+
+  };
+
+  # bigscreen missing packages fix
+  nixpkgs.overlays = [
+    (final: prev: {
+      kdePackages = prev.kdePackages // {
+        plasma-bigscreen = prev.kdePackages.plasma-bigscreen.overrideAttrs (old: {
+          buildInputs = (old.buildInputs or [ ]) ++ [ prev.kdePackages.kdeconnect-kde ];
+          preFixup = ''
+                  wrapQtApp $out/bin/plasma-bigscreen-wayland \
+                    --prefix QML2_IMPORT_PATH : "${prev.kdePackages.kdeconnect-kde}/lib/qt-6/qml"
+                '';
+        });
+      };
+    })
+  ];
+
+  #prevent sleep
+  systemd.sleep.settings.Sleep = {
+    AllowHibernation = "no";
+    AllowHybridSleep = "no";
+    AllowSuspend = "no";
+    AllowSuspendThenHibernate = "no";
   };
 
   virtualisation.incus.enable = true;
@@ -46,9 +91,6 @@ in {
   hardware.bluetooth.enable = true;
 
   hardware.xpadneo.enable = true;
-  environment.systemPackages = with pkgs; [
-    seaweedfs
-  ];
   # Define a user account. Don't forget to set a password with ‘mkpasswd -m sha-512’.
 
   users.users.admin = {
@@ -62,6 +104,10 @@ in {
     # passwordFile needs to be in a volume marked with  `neededForBoot = true`
     packages = with pkgs; [
     ];
+  };
+
+  users.users.ash = {
+    isNormalUser = true;
   };
 
 #  services.garage = {

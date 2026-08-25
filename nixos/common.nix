@@ -39,7 +39,7 @@
       sshKey = config.sops.secrets.builder-ssh.path;
     }
   ];
-  nix.distributedBuilds = true;
+#  nix.distributedBuilds = true;
 
   environment.systemPackages = with pkgs; [
     busybox
@@ -47,9 +47,11 @@
 
   services.openssh = {
     enable = true;
+
     passwordAuthentication = false;
+
     # allowSFTP = false; # Don't set this if you need sftp
-    challengeResponseAuthentication = true;
+    kbdInteractiveAuthentication = true;
     extraConfig = ''
       AllowTcpForwarding yes
       X11Forwarding no
@@ -131,4 +133,3 @@
     };
   };
 }
-

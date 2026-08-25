@@ -21,7 +21,7 @@ in {
   services.monado = {
     enable = true;
     defaultRuntime = true; # Register as default OpenXR runtime
-    # package = pkgs.monado.overrideAttrs (finalAttrs: previousAttrs: { src = sources.monado.outPath; patches = []; }); #rayneo driver fork
+    package = pkgs.monado.overrideAttrs (finalAttrs: previousAttrs: { src = sources.monado.outPath; patches = []; }); #rayneo driver fork
   };
   systemd.user.services.monado.environment = {
     STEAMVR_LH_ENABLE = "1";
@@ -30,11 +30,18 @@ in {
 
  nixpkgs.overlays = [
    # kde-over
-   pkgs-xr.overlays.default
+   # pkgs-xr.overlays.default
  ];
+
+ nixpkgs.config = {
+   problems.handlers = {
+     envision-unwrapped.broken = "warn";
+   };
+ };
 
   environment.systemPackages = with pkgs; [
     wayvr
     kdePackages.qtquick3d
+    envision-unwrapped
   ];
 }

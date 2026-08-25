@@ -23,6 +23,33 @@
     };
   };
 
+  services.deluge = {
+    enable = false;
+    group = "media";
+    openFirewall = true;
+    web.enable = true;
+  };
+
+  services.transmission = {
+    enable = true;
+    group = "media";
+    settings = {
+      umask = "002";
+      download-dir = "${config.nixflix.stateDir}/torrents";
+      rpc_username = "transmission";
+      rpc_password = config.sops.secrets.jelly-pass;
+    };
+    downloadDirPermissions = "775";
+    openFirewall = true;
+
+  };
+
+#  systemd.services.qbittorrent.vpnConfinement = {
+#    enable = true;
+#    vpnNamespace = "wg";
+#  };
+
+
   nixflix = {
     enable = true;
     mediaDir = "/mnt/storage/media";
@@ -34,11 +61,15 @@
       addHostsEntries = false; # Disable this if you have your own DNS configuration
     };
 
+    caddy = {
+      enable = false;
+    };
+
     vpn = {
       enable = true;
-      accessableFrom = [
+      accessibleFrom = [
         "192.168.0.0/24"
-        "100.0.0.0/48"
+        "100.0.0.0/8"
       ];
       wgConfFile = config.sops.secrets.mull-nixflix.path;
     };
@@ -49,9 +80,10 @@
     };
 
     postgres.enable = true;
+    flaresolverr.enable = true;
 
     sonarr-anime = {
-      enable = true;
+      enable = false;
       config = {
         apiKey = {_secret = config.sops.secrets.anime-api.path;};
         hostConfig.password = {_secret = config.sops.secrets.jelly-pass.path;};
@@ -80,17 +112,18 @@
         apiKey = {_secret = config.sops.secrets.prowlarr-api.path;};
         hostConfig.password = {_secret = config.sops.secrets.jelly-pass.path;};
         indexers = [
-           {
-             name = "NZBStars";
-             apiKey._secret = config.sops.secrets.NZBStars-api.path;
-           }
-           { name = "BitSearch"; }
+#           {
+#             name = "NZBStars";
+#             apiKey._secret = config.sops.secrets.NZBStars-api.path;
+#           }
+           { name = "Anibt"; }
            { name = "Bangumi Moe"; }
            { name = "BT.etree"; }
-           { name = "EZTV"; }
+           { name = "The Pirate Bay"; }
            { name = "Knaben"; }
            { name = "nekoBT"; }
            { name = "SubsPlease"; }
+#           { name = "Sharna Project"; }
          ];
       };
     };
@@ -136,12 +169,29 @@
       };
     };
 
-    torrentClients = {
-      qbittorrent = {
+    downloadarr = {
+      enable = true;
+      deluge = {
+        enable = false;
+        password = "deluge";
+        dependencies = [ "deluged.service" ];
+      };
+      transmission = {
         enable = true;
-        password = {_secret = config.sops.secrets.jelly-pass.path;};
+        dependencies = [ "transmission.service" ];
+        password =  {_secret = config.sops.secrets.jelly-pass.path;};
+        username = "transmission";
       };
     };
+
+#    torrentClients = {
+#      qbittorrent = {
+#        enable = true;
+#        password = {_secret = config.sops.secrets.jelly-pass.path;};
+#        openFirewall = true;
+#        group = "media";
+#      };
+#    };
 
   };
 }

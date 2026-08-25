@@ -2,15 +2,18 @@
 let
   quiet = import ../secrets/quiet.nix;
   cachy-kern = import sources.nix-cachyos-kernel.outPath;
+  numen = import sources.numen-nix;
 in {
 
 imports = [
   ../nixos/gaming.nix
-  ../nixos/dwl.nix
+#  ../nixos/dwl.nix
   ../nixos/printing.nix
   ../nixos/vr.nix
-#  ../modules/odysseus.nix
+  #../modules/odysseus.nix
   ../modules/nix-ld.nix
+  "${sources.home-manager}/nixos"
+  ./Home.nix
 ];
 
 #odysseus.enable = true;
@@ -25,6 +28,24 @@ xdg.portal.configPackages = [ pkgs.kdePackages.plasma-bigscreen ];
 services.displayManager.sessionPackages = [
   pkgs.kdePackages.plasma-bigscreen
 ];
+services.xserver = {
+    enable = true;
+
+    windowManager.i3 = {
+      enable = true;
+      extraPackages = with pkgs; [
+        dmenu #application launcher most people use
+        i3status # gives you the default i3 status bar
+        i3lock #default i3 screen locker
+     ];
+   };
+};
+#tooling for numen
+services.udev.extraRules = ''
+  KERNEL=="uinput", GROUP="input", MODE="0660", OPTIONS+="static_node=uinput"
+'';
+
+
 virtualisation.waydroid.enable = true;
 programs.kdeconnect.enable = true;
 #services.xserver.windowManager.dwl.enable = true;
@@ -38,8 +59,10 @@ users.users.cale = {
     "lp"
     "dialout"
     "podman"
+    "input" #numen
   ];
   packages = with pkgs; [
+    numen.outputs.packages.x86_64-linux.default
     sshfs
     emacsPackages.mu4e
     kdePackages.plasma-bigscreen
@@ -81,6 +104,7 @@ users.users.cale = {
     gnumake
     syncthing
     pantum-driver
+    podman-compose
     libreoffice-qt-still
     (librewolf.override { cfg.enablePlasmaBrowserIntegration = true; })
   ];
@@ -146,6 +170,7 @@ sops.secrets = {
 
 nixpkgs.config.allowUnfreePredicate = pkg: builtins.elem (lib.getName pkg) [
   "1password-gui"
+  "1password-cli"
   "1password"
 ];
 
@@ -158,15 +183,15 @@ programs._1password-gui = {
 };
 
 nixpkgs.overlays = [
-  cachy-kern.overlays.pinned
+#  cachy-kern.overlays.pinned
 ];
 
 boot.kernelPackages = pkgs.linuxPackages_latest; #pkgs.cachyosKernels.linuxPackages-cachyos-latest-lto-x86_64-v4;
-nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" "https://cache.garnix.io/" ];
-nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" "cache.garnix.io:CTFPyKSLcx5RMJKfLo5EEPUObbA78b0YQ2DTCJXqr9g=" ]; #cachy binary cache
+nix.settings.substituters = [ "https://attic.xuyh0120.win/lantian/" ];
+nix.settings.trusted-public-keys = [ "lantian:EeAUQ+W+6r7EtwnmYjeVwx5kOGEBpjlBfPlzGlTNvHc=" ]; #cachy binary cache
 
 services.syncthing = {
-  enable = false;
+  enable = true;
   dataDir = "/home/cale/Syncthing/";
   user = "cale";
   openDefaultPorts = true;
@@ -174,16 +199,19 @@ services.syncthing = {
   guiAddress = "0.0.0.0:8385";
   key = config.sops.secrets.sync-key.path;
   cert = config.sops.secrets.sync-cert.path;
+  overrideFolders = false;
+  overrideDevices = false;
   settings = {
     devices = {
-      "paperless" = { id = quiet.syncthing.paperless.id; };
+      "phone" = { id = quiet.syncthing.phone.id; };
+      "circe" = { id = quiet.syncthing.circe.id; };
     };
     folders = {
-      "Paperless-Consume" = {
-        path = "/home/cale/Documents/Paperless-Consume";
-        devices = [ "paperless"];
+      "Ains-shared" = {
+        path = "/home/cale/Documents/Tough";
+        devices = [ "phone" ];
         #type = "sendonly";
-        id = "Consume";
+        id = "lffkx-tucmp";
       };
     };
   };

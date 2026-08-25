@@ -29,6 +29,7 @@ in
       ../modules/llama-swap-config.nix
       ../modules/dwarfstar/module.nix
       ../modules/Restic.nix
+      ../modules/immich.nix
     ];
   sops.secrets = {
     searxng-key = {};

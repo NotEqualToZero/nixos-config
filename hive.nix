@@ -13,7 +13,7 @@ in {
 #     Heracles = import sources.pkgs-uns;
       Hades2 = import sources.pkgs-uns;
       Factorio = import sources.pkgs-uns;
-      MediaNix = import sources.pkgs-uns;
+      Circe = import sources.pkgs-uns;
     };
     specialArgs = { inherit sources; }; # brings npins into configs
 
@@ -68,7 +68,8 @@ in {
 
     deployment = {
       allowLocalDeployment = true;
-      targetHost = null;
+      targetHost = "hades2";
+      targetUser = "admin";
     };
   };
 

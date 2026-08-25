@@ -41,7 +41,14 @@ in {
 
   services.restic.backups = {
     NAS = {
-      paths = ["/tank/Document Archive" "/tank/Misc Archive" "/tank/Paperless" "/tank/Pictures Archive" "/tank/RPG"];
+      paths = [
+        "/tank/Document Archive"
+        "/tank/Misc Archive"
+        "/tank/Paperless"
+        "/tank/Pictures Archive"
+        "/tank/RPG"
+        "/tank/Immich"
+      ];
       pruneOpts = [
         "--keep-hourly 3"
         "--keep-daily 7"
@@ -50,7 +57,7 @@ in {
         "--keep-yearly 10"
       ];
       timerConfig = {
-        # OnBootSec = "3m"; # uncomment this this line if your on wifi
+        OnBootSec = "3m"; # uncomment this this line if your on wifi
         OnCalendar = "hourly";
         Persistent = true;
       };
