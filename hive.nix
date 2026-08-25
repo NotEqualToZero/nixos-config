@@ -9,9 +9,8 @@ in {
     # - An initialized Nixpkgs attribute set
     nixpkgs = import sources."nixos-26.05" ; #npins default nixpkgs currently 26.05 11/06/26
     nodeNixpkgs = {
-#     Hades = import sources.pkgs-uns;
 #     Heracles = import sources.pkgs-uns;
-      Hades2 = import sources.pkgs-uns;
+      Hades = import sources.pkgs-uns;
       Factorio = import sources.pkgs-uns;
       Circe = import sources.pkgs-uns;
     };
@@ -47,19 +46,7 @@ in {
     # deployment.replaceUnknownProfiles = true;
   };
 
-#   Hades = { name, nodes, ... }: {
-#    imports = [
-#      ./Hades/configuration.nix
-#      ./Hades/Cale.nix
-#      ./Hades/HPEnvy.nix
-#    ];
-#    deployment = {
-#      allowLocalDeployment = true;
-#      targetHost = null;
-#    };
-#   };
-
-  Hades2 = { name, nodes, ... }: {
+  Hades = { name, nodes, ... }: {
     imports = [
       ./Hades/configuration.nix
       ./Hades/Cale.nix
