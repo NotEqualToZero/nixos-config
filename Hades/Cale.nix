@@ -11,8 +11,8 @@ imports = [
 # ../nixos/vr.nix
   #../modules/odysseus.nix
   ../modules/nix-ld.nix
-# "${sources.home-manager}/nixos"
-# ./Home.nix
+ "${sources.home-manager}/nixos"
+ ./Home.nix
 ];
 
 #odysseus.enable = true;
