@@ -87,7 +87,7 @@ in {
     wireplumber.enable = true;
   };
   # Enable 3D graphics.
-  hardware.opengl.enable = true;
+  hardware.graphics.enable = true;
   hardware.bluetooth.enable = true;
 
   hardware.xpadneo.enable = true;
@@ -120,19 +120,6 @@ in {
 #    };
 #  };
 
-  services.openssh = {
-    enable = true;
-    passwordAuthentication = false;
-    # allowSFTP = false; # Don't set this if you need sftp
-    challengeResponseAuthentication = true;
-    extraConfig = ''
-      AllowTcpForwarding yes
-      X11Forwarding no
-      AllowAgentForwarding yes
-      AllowStreamLocalForwarding no
-      AuthenticationMethods publickey
-      '';
-  };
   nix.settings.trusted-users = [ "admin" ];
 
 

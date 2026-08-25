@@ -48,10 +48,11 @@
   services.openssh = {
     enable = true;
 
-    passwordAuthentication = false;
-
+    settings = {
+      PasswordAuthentication = false;
     # allowSFTP = false; # Don't set this if you need sftp
-    kbdInteractiveAuthentication = true;
+      KbdInteractiveAuthentication =  true;
+    };
     extraConfig = ''
       AllowTcpForwarding yes
       X11Forwarding no

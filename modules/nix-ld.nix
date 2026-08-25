@@ -26,19 +26,19 @@
       systemd
 
       # My own additions
-      xorg.libXcomposite
-      xorg.libXtst
-      xorg.libXrandr
-      xorg.libXext
-      xorg.libX11
-      xorg.libXfixes
+      libXcomposite
+      libXtst
+      libXrandr
+      libXext
+      libX11
+      libXfixes
       libGL
       libva
       pipewire
-      xorg.libxcb
-      xorg.libXdamage
-      xorg.libxshmfence
-      xorg.libXxf86vm
+      libxcb
+      libXdamage
+      libxshmfence
+      libXxf86vm
       libelf
 
       # Required
@@ -58,13 +58,13 @@
       # glibc_multi.bin # Seems to cause issue in ARM
 
       # # Without these it silently fails
-      xorg.libXinerama
-      xorg.libXcursor
-      xorg.libXrender
-      xorg.libXScrnSaver
-      xorg.libXi
-      xorg.libSM
-      xorg.libICE
+      libXinerama
+      libXcursor
+      libXrender
+      libXScrnSaver
+      libXi
+      libSM
+      libICE
       gnome2.GConf
       nspr
       nss
@@ -171,11 +171,11 @@
       libpulseaudio
       krb5
       libxcb-cursor
-      xorg.xcbutilwm
-      xorg.xcbutil
-      xorg.xcbutilimage
-      xorg.xcbutilkeysyms
-      xorg.xcbutilrenderutil
+      xcbutilwm
+      xcbutil
+      xcbutilimage
+      xcbutilkeysyms
+      xcbutilrenderutil
 
     ];
   };
