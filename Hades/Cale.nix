@@ -48,12 +48,15 @@ users.users.cale = {
     numen.outputs.packages.x86_64-linux.default
     emacsPackages.mu4e
     kdePackages.plasma-bigscreen
+    ripgrep
     mu
     mu.mu4e
     isync
     msmtp
     obsidian
-    kitty
+    hyprlauncher #hyprland default launcher
+    kitty #hyprland default terminal
+    waybar #hypr newb status bar
     moonlight-qt
     google-chrome
     vlc
@@ -95,13 +98,18 @@ virtualisation = {
   };
 };
 
-programs.hyprland.enable = true;
+  programs.hyprland = {
+    enable = true;
+    withUWSM = true; # recommended for most users
+    xwayland.enable = true; # Xwayland can be disabled.
+  };
 
 environment.variables = { SOPS_AGE_KEY_CMD="op read op://Private/Sops-Nix/password"; };
 
 fonts.enableDefaultPackages = true;
 fonts.packages = with pkgs; [
   nerd-fonts.symbols-only
+  font-awesome_4 #Waybar symbols
 ];
 
 services.tailscale = {
