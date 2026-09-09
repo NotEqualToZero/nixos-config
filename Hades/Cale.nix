@@ -174,11 +174,12 @@ services.syncthing = {
     devices = {
       "phone" = { id = quiet.syncthing.phone.id; };
       "circe" = { id = quiet.syncthing.circe.id; };
+      "ains-lap" = { id = quiet.syncthing.ains-lap.id; };
     };
     folders = {
       "Ains-shared" = {
         path = "/home/cale/Documents/Tough";
-        devices = [ "phone" ];
+        devices = [ "phone" "circe" "ains-lap" ];
         #type = "sendonly";
         id = "lffkx-tucmp";
       };
