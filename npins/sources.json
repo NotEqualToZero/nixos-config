@@ -23,9 +23,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "54b36ed9ba42da31b24f2d1a5feb075c2475dbb1",
-      "url": "https://github.com/antirez/ds4/archive/54b36ed9ba42da31b24f2d1a5feb075c2475dbb1.tar.gz",
-      "hash": "sha256-HVw/5BOqZUA79UWbyWSaNGJVhcYjwKNhhN7qefwdaFQ="
+      "revision": "8db1d1d155cb0400a86a86b9c62d0defb3a6148b",
+      "url": "https://github.com/antirez/ds4/archive/8db1d1d155cb0400a86a86b9c62d0defb3a6148b.tar.gz",
+      "hash": "sha256-d0TRJH5/cNlDrgJy2i9eEUuSAlnka0BvxDXlXIwMwrE="
     },
     "ewm": {
       "type": "Git",
@@ -37,9 +37,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "dc5eb71642a9def5f2ac19005d3209ae092f45d9",
-      "url": "https://codeberg.org/ezemtsov/ewm/archive/dc5eb71642a9def5f2ac19005d3209ae092f45d9.tar.gz",
-      "hash": "sha256-LAjLmdzkxEStiMRjKd4Ze4c7eJ/R7whMnfsCrZSLoMc="
+      "revision": "b8373fe55b914cad99914b65d6b8829fe44b6af6",
+      "url": "https://codeberg.org/ezemtsov/ewm/archive/b8373fe55b914cad99914b65d6b8829fe44b6af6.tar.gz",
+      "hash": "sha256-YnZ2c66gK5p+DxXClQ6qHzCcff+ko58HlS+KdjMt8jk="
     },
     "flake-compat": {
       "type": "Git",
@@ -63,9 +63,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "7834e82588860aaf780cec1366524456a70898d7",
-      "url": "https://github.com/nix-community/home-manager/archive/7834e82588860aaf780cec1366524456a70898d7.tar.gz",
-      "hash": "sha256-TIDlLTLI1/pB7IqgjzcKQjpODQsZE2oII4XGG9B6KjI="
+      "revision": "17903129f47656fa4d07e78ad87f6592ff4f2527",
+      "url": "https://github.com/nix-community/home-manager/archive/17903129f47656fa4d07e78ad87f6592ff4f2527.tar.gz",
+      "hash": "sha256-voJJ5IZR4w2149u2Jm/j2zifeWROlpZQ+JzmCQwjgn8="
     },
     "jw-st": {
       "type": "Git",
@@ -93,6 +93,19 @@
       "url": "https://invent.kde.org/api/v4/projects/lightofmysoul%2Fkwin/repository/archive.tar.gz?sha=88206fe12ecb2bcc5987a2e535d0bad98d2e9167",
       "hash": "sha256-obrcE/a+U8+3G3YeDIuM8WvGCVzx+pCO/4LRNP+UOO0="
     },
+    "logitech-trueforce-linux-driver": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "mescon",
+        "repo": "logitech-trueforce-linux-driver"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "8d22697360346e6d4c4169b3378f06dc34025998",
+      "url": "https://github.com/mescon/logitech-trueforce-linux-driver/archive/8d22697360346e6d4c4169b3378f06dc34025998.tar.gz",
+      "hash": "sha256-yiTBD/z+kunF9QwcSGEF+u4I+xt4F4OhAlAAWtaLXow="
+    },
     "monado": {
       "type": "Git",
       "repository": {
@@ -115,9 +128,9 @@
       },
       "branch": "release",
       "submodules": false,
-      "revision": "c6be74346ad21399708e2f15c403e51a27a4ed13",
-      "url": "https://github.com/xddxdd/nix-cachyos-kernel/archive/c6be74346ad21399708e2f15c403e51a27a4ed13.tar.gz",
-      "hash": "sha256-u2jA6fdtpzPgvw/49NP5P9y2SoopurMGuw0UZgaPkeY="
+      "revision": "444d135dde71c1de547cf7bfd73e67145e67aebb",
+      "url": "https://github.com/xddxdd/nix-cachyos-kernel/archive/444d135dde71c1de547cf7bfd73e67145e67aebb.tar.gz",
+      "hash": "sha256-kY+k8kGBd8w4kxrw8IPzQGpnYZQV4mik2ZNHtGN0eHI="
     },
     "nixflix": {
       "type": "Git",
@@ -128,16 +141,16 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "f695a39af476002437313d2ebbb0165419e44f12",
-      "url": "https://github.com/kiriwalawren/nixflix/archive/f695a39af476002437313d2ebbb0165419e44f12.tar.gz",
-      "hash": "sha256-ioX1n9dcB324u/6txeSmH5kJUJUMA+6SzG4r0Hakrzk="
+      "revision": "78fe4493e39f3f4099eea678a0ca572ece6039b5",
+      "url": "https://github.com/kiriwalawren/nixflix/archive/78fe4493e39f3f4099eea678a0ca572ece6039b5.tar.gz",
+      "hash": "sha256-JvzVC7w9OVdra26bp+CYLoo8XlWyLHacs1lPK7CuFyM="
     },
     "nixos-26.05": {
       "type": "Channel",
       "name": "nixos-26.05",
       "artifact": "nixexprs.tar.xz",
-      "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.6603.5b4f72e1705a/nixexprs.tar.xz",
-      "hash": "sha256-GGQER+O/plhJCG35JVsKYVwI8qtOKR7UB4E3e8DBKmQ="
+      "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.9989.ecc58f32d106/nixexprs.tar.xz",
+      "hash": "sha256-a0J/BOBKhTv1G1v10+KTda4z88xdsPB1tw/kwAFLfCc="
     },
     "nixos-hardware": {
       "type": "Git",
@@ -148,9 +161,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "2e790b0a6be8ec2b76174ac0931b8ff11919ec98",
-      "url": "https://github.com/NixOS/nixos-hardware/archive/2e790b0a6be8ec2b76174ac0931b8ff11919ec98.tar.gz",
-      "hash": "sha256-65EQYIRRpTdpH8lUiB6Mvo5uBkG60aBIzAJuALfx+O0="
+      "revision": "b2d7d02644f0002535a3bb51a73780945cdc7ba4",
+      "url": "https://github.com/NixOS/nixos-hardware/archive/b2d7d02644f0002535a3bb51a73780945cdc7ba4.tar.gz",
+      "hash": "sha256-q0J27mJDfd4BM9a7KcMVbcRmqyU+goQwudbMIu66qsg="
     },
     "nixpkgs-xr": {
       "type": "Git",
@@ -161,9 +174,9 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "3bbb507f7691e21f1232ae3cfed243e7b123c728",
-      "url": "https://github.com/nix-community/nixpkgs-xr/archive/3bbb507f7691e21f1232ae3cfed243e7b123c728.tar.gz",
-      "hash": "sha256-ab+81Lz4qfvdvtnFctv5zkfy65Lw+b2RAIeExlm8dEY="
+      "revision": "954f980ce3c50557936d104e0bedd3423fe027b3",
+      "url": "https://github.com/nix-community/nixpkgs-xr/archive/954f980ce3c50557936d104e0bedd3423fe027b3.tar.gz",
+      "hash": "sha256-5uPHRwT6QZjE26FFY8mSY0wvab+nxPfJG+oRIgUR/cQ="
     },
     "numen-nix": {
       "type": "Git",
@@ -208,8 +221,8 @@
       "type": "Channel",
       "name": "nixos-unstable",
       "artifact": "nixexprs.tar.xz",
-      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.11pre1045728.148bab9c1c3c/nixexprs.tar.xz",
-      "hash": "sha256-xwSqxTsama0YTtS78+4YyCm6jJg09v78QWfP1cAyoVA="
+      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.11pre1075591.e554fab72f81/nixexprs.tar.xz",
+      "hash": "sha256-TAKa57gfBM/9a4IZrFaIQZhnHs9mXIFPlZbYrvhnaMY="
     },
     "sops-nix": {
       "type": "Git",
@@ -220,9 +233,9 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "f1406619a3884cd5c47992a70b8b35c9c0fcb4c9",
-      "url": "https://github.com/Mic92/sops-nix/archive/f1406619a3884cd5c47992a70b8b35c9c0fcb4c9.tar.gz",
-      "hash": "sha256-aCWC8ngycU7OdJrU2+Je3qf+1a2ykuBvpPhZT/9tXMc="
+      "revision": "1e73e8f7176d65e1b55e324de099bbfff4b2c574",
+      "url": "https://github.com/Mic92/sops-nix/archive/1e73e8f7176d65e1b55e324de099bbfff4b2c574.tar.gz",
+      "hash": "sha256-k+I+R6uwHX3VcJ7326qLV6vCahZUgsVl+i8sSU/Stxk="
     },
     "st": {
       "type": "GitRelease",
@@ -264,6 +277,58 @@
       "revision": "a13f95e0d7b87d0127079245236bcd8705c6b4dd",
       "url": "https://github.com/nix-community/talon-nix/archive/a13f95e0d7b87d0127079245236bcd8705c6b4dd.tar.gz",
       "hash": "sha256-+qZasmBp556iAiIx5ZdiTS1yI4aiPZ7XHaCRk6UopME="
+    },
+    "unflake_github_mescon_logitech-trueforce-linux-driver": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "mescon",
+        "repo": "logitech-trueforce-linux-driver"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "8d22697360346e6d4c4169b3378f06dc34025998",
+      "url": "https://github.com/mescon/logitech-trueforce-linux-driver/archive/8d22697360346e6d4c4169b3378f06dc34025998.tar.gz",
+      "hash": "sha256-yiTBD/z+kunF9QwcSGEF+u4I+xt4F4OhAlAAWtaLXow="
+    },
+    "unflake_github_nix-systems_default": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-systems",
+        "repo": "default"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+      "url": "https://github.com/nix-systems/default/archive/da67096a3b9bf56a91d16901293e51ba5b49a27e.tar.gz",
+      "hash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768="
+    },
+    "unflake_github_nixos_nixpkgs_ref_nixos-unstable": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nixos",
+        "repo": "nixpkgs"
+      },
+      "branch": "nixos-unstable",
+      "submodules": false,
+      "revision": "e554fab72f81915600f3f449b786fd9af40439a5",
+      "url": "https://github.com/nixos/nixpkgs/archive/e554fab72f81915600f3f449b786fd9af40439a5.tar.gz",
+      "hash": "sha256-ZKhUe/2IJUq1JhKxKMu8rbkgSGmPP2ZCqlIPn40aGCM="
+    },
+    "unflake_github_numtide_flake-utils": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "numtide",
+        "repo": "flake-utils"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+      "url": "https://github.com/numtide/flake-utils/archive/11707dc2f618dd54ca8739b309ec4fc024de578b.tar.gz",
+      "hash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI="
     }
   },
   "version": 8

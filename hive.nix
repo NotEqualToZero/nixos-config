@@ -1,5 +1,6 @@
 let
   sources = import ./npins;
+  unflake = import ./unflake.nix;
 in {
   meta = {
     # Override to pin the Nixpkgs version (recommended). This option
@@ -14,7 +15,7 @@ in {
       Factorio = import sources.pkgs-uns;
       Circe = import sources.pkgs-uns;
     };
-    specialArgs = { inherit sources; }; # brings npins into configs
+    specialArgs = { inherit sources unflake; }; # brings npins unflake into configs
 
 #    allowApplyAll = false;
   };

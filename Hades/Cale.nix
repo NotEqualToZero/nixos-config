@@ -49,6 +49,8 @@ users.users.cale = {
     emacsPackages.mu4e
     kdePackages.plasma-bigscreen
     ripgrep
+    wl-kbptr
+    wlrctl
     mu
     mu.mu4e
     isync

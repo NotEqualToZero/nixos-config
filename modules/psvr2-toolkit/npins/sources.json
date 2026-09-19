@@ -1,0 +1,28 @@
+{
+  "pins": {
+    "nixpkgs": {
+      "type": "Channel",
+      "name": "nixpkgs-unstable",
+      "artifact": "nixexprs.tar.xz",
+      "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1073483.c7def046b9a8/nixexprs.tar.xz",
+      "hash": "sha256-obwZbWHP7htCIoq2Z0g/uTMcEgN6yqcMNIcOMe6P2qI="
+    },
+    "xr-hardware": {
+      "type": "GitRelease",
+      "repository": {
+        "type": "GitLab",
+        "repo_path": "monado/utilities/xr-hardware",
+        "server": "https://gitlab.freedesktop.org/"
+      },
+      "pre_releases": true,
+      "version_upper_bound": null,
+      "release_prefix": null,
+      "submodules": false,
+      "version": "1.1.2",
+      "revision": "56901e8a372daae7150b31df9761df3deda9262c",
+      "url": "https://gitlab.freedesktop.org/api/v4/projects/monado%2Futilities%2Fxr-hardware/repository/archive.tar.gz?sha=1.1.2",
+      "hash": "sha256-stJjjencaO7cDOyVak2BaDnPQsjsX63+9dwY0Q//7To="
+    }
+  },
+  "version": 8
+}
