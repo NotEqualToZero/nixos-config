@@ -1,0 +1,12 @@
+{
+  "pins": {
+    "nixpkgs": {
+      "artifact": "nixexprs.tar.xz",
+      "hash": "sha256-iR1Jj6svMpvLxPWA40qp+WUpg3MStLXJy5TZrP2cPes=",
+      "name": "nixpkgs-unstable",
+      "type": "Channel",
+      "url": "https://releases.nixos.org/nixpkgs/nixpkgs-26.11pre1072974.02f5696b0e60/nixexprs.tar.xz"
+    }
+  },
+  "version": 8
+}

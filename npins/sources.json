@@ -3,27 +3,154 @@
     "25.05": {
       "type": "Channel",
       "name": "nixos-25.05",
+      "artifact": "nixexprs.tar.xz",
       "url": "https://releases.nixos.org/nixos/25.05/nixos-25.05.813814.ac62194c3917/nixexprs.tar.xz",
-      "hash": "1ddmkpi8fn643b50sg2241w85549cx53ahhhj7vf9129rhpqqd6z"
+      "hash": "sha256-3zSML8xJhOT2kRBCNUpniZSCeCBCPA3KGsRYh+KdtbU="
     },
     "25.11": {
       "type": "Channel",
       "name": "nixos-25.11",
-      "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.4506.078d69f03934/nixexprs.tar.xz",
-      "hash": "1zn8r7c40zd4xsklxg7gjq82ls8j113r27bc4gnfpf00hy4vpvsy"
+      "artifact": "nixexprs.tar.xz",
+      "url": "https://releases.nixos.org/nixos/25.11/nixos-25.11.12484.b6018f87da91/nixexprs.tar.xz",
+      "hash": "sha256-IWpaImuKa1YVOmnuPyyzbG6/Q6ZgKaOsP4sXmfTbkdQ="
     },
-    "impermanence": {
+    "ds4": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "antirez",
+        "repo": "ds4"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "8db1d1d155cb0400a86a86b9c62d0defb3a6148b",
+      "url": "https://github.com/antirez/ds4/archive/8db1d1d155cb0400a86a86b9c62d0defb3a6148b.tar.gz",
+      "hash": "sha256-d0TRJH5/cNlDrgJy2i9eEUuSAlnka0BvxDXlXIwMwrE="
+    },
+    "ewm": {
+      "type": "Git",
+      "repository": {
+        "type": "Forgejo",
+        "server": "https://codeberg.org/",
+        "owner": "ezemtsov",
+        "repo": "ewm"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "b8373fe55b914cad99914b65d6b8829fe44b6af6",
+      "url": "https://codeberg.org/ezemtsov/ewm/archive/b8373fe55b914cad99914b65d6b8829fe44b6af6.tar.gz",
+      "hash": "sha256-YnZ2c66gK5p+DxXClQ6qHzCcff+ko58HlS+KdjMt8jk="
+    },
+    "flake-compat": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NixOS",
+        "repo": "flake-compat"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "5edf11c44bc78a0d334f6334cdaf7d60d732daab",
+      "url": "https://github.com/NixOS/flake-compat/archive/5edf11c44bc78a0d334f6334cdaf7d60d732daab.tar.gz",
+      "hash": "sha256-vNpUSpF5Nuw8xvDLj2KCwwksIbjua2LZCqhV1LNRDns="
+    },
+    "home-manager": {
       "type": "Git",
       "repository": {
         "type": "GitHub",
         "owner": "nix-community",
-        "repo": "impermanence"
+        "repo": "home-manager"
       },
       "branch": "master",
       "submodules": false,
-      "revision": "4b3e914cdf97a5b536a889e939fb2fd2b043a170",
-      "url": "https://github.com/nix-community/impermanence/archive/4b3e914cdf97a5b536a889e939fb2fd2b043a170.tar.gz",
-      "hash": "04l16szln2x0ajq2x799krb53ykvc6vm44x86ppy1jg9fr82161c"
+      "revision": "17903129f47656fa4d07e78ad87f6592ff4f2527",
+      "url": "https://github.com/nix-community/home-manager/archive/17903129f47656fa4d07e78ad87f6592ff4f2527.tar.gz",
+      "hash": "sha256-voJJ5IZR4w2149u2Jm/j2zifeWROlpZQ+JzmCQwjgn8="
+    },
+    "jw-st": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "jonwin1",
+        "repo": "st-jonwin"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "74978c34ea4557e7507722d05a5d886b5d02a79a",
+      "url": "https://github.com/jonwin1/st-jonwin/archive/74978c34ea4557e7507722d05a5d886b5d02a79a.tar.gz",
+      "hash": "sha256-Nge7gukW+Et5UTzXWJl73KD4+HpcvHy+93oRzyr+a+o="
+    },
+    "kwin-vr": {
+      "type": "Git",
+      "repository": {
+        "type": "GitLab",
+        "repo_path": "lightofmysoul/kwin",
+        "server": "https://invent.kde.org/"
+      },
+      "branch": "6.6.3_vr",
+      "submodules": false,
+      "revision": "88206fe12ecb2bcc5987a2e535d0bad98d2e9167",
+      "url": "https://invent.kde.org/api/v4/projects/lightofmysoul%2Fkwin/repository/archive.tar.gz?sha=88206fe12ecb2bcc5987a2e535d0bad98d2e9167",
+      "hash": "sha256-obrcE/a+U8+3G3YeDIuM8WvGCVzx+pCO/4LRNP+UOO0="
+    },
+    "logitech-trueforce-linux-driver": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "mescon",
+        "repo": "logitech-trueforce-linux-driver"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "8d22697360346e6d4c4169b3378f06dc34025998",
+      "url": "https://github.com/mescon/logitech-trueforce-linux-driver/archive/8d22697360346e6d4c4169b3378f06dc34025998.tar.gz",
+      "hash": "sha256-yiTBD/z+kunF9QwcSGEF+u4I+xt4F4OhAlAAWtaLXow="
+    },
+    "monado": {
+      "type": "Git",
+      "repository": {
+        "type": "GitLab",
+        "repo_path": "lightofmysoul/monado",
+        "server": "https://gitlab.freedesktop.org/"
+      },
+      "branch": "rayneo_drv",
+      "submodules": false,
+      "revision": "07fc6a65d92dc777504e90d90cc81458894edaab",
+      "url": "https://gitlab.freedesktop.org/api/v4/projects/lightofmysoul%2Fmonado/repository/archive.tar.gz?sha=07fc6a65d92dc777504e90d90cc81458894edaab",
+      "hash": "sha256-a98j9+PKhXOcJFpm5XIxXGKR1CAHFcx+0Hq5Cv+/lsY="
+    },
+    "nix-cachyos-kernel": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "xddxdd",
+        "repo": "nix-cachyos-kernel"
+      },
+      "branch": "release",
+      "submodules": false,
+      "revision": "444d135dde71c1de547cf7bfd73e67145e67aebb",
+      "url": "https://github.com/xddxdd/nix-cachyos-kernel/archive/444d135dde71c1de547cf7bfd73e67145e67aebb.tar.gz",
+      "hash": "sha256-kY+k8kGBd8w4kxrw8IPzQGpnYZQV4mik2ZNHtGN0eHI="
+    },
+    "nixflix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "kiriwalawren",
+        "repo": "nixflix"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "78fe4493e39f3f4099eea678a0ca572ece6039b5",
+      "url": "https://github.com/kiriwalawren/nixflix/archive/78fe4493e39f3f4099eea678a0ca572ece6039b5.tar.gz",
+      "hash": "sha256-JvzVC7w9OVdra26bp+CYLoo8XlWyLHacs1lPK7CuFyM="
+    },
+    "nixos-26.05": {
+      "type": "Channel",
+      "name": "nixos-26.05",
+      "artifact": "nixexprs.tar.xz",
+      "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.9989.ecc58f32d106/nixexprs.tar.xz",
+      "hash": "sha256-a0J/BOBKhTv1G1v10+KTda4z88xdsPB1tw/kwAFLfCc="
     },
     "nixos-hardware": {
       "type": "Git",
@@ -34,21 +161,68 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "d62603a997438e19182af69d3ce7be07565ecad4",
-      "url": "https://github.com/NixOS/nixos-hardware/archive/d62603a997438e19182af69d3ce7be07565ecad4.tar.gz",
-      "hash": "12218jd2bj9awl83zi0y55vki7m7i6qhm6dmqz8pmy8xfkaqap44"
+      "revision": "b2d7d02644f0002535a3bb51a73780945cdc7ba4",
+      "url": "https://github.com/NixOS/nixos-hardware/archive/b2d7d02644f0002535a3bb51a73780945cdc7ba4.tar.gz",
+      "hash": "sha256-q0J27mJDfd4BM9a7KcMVbcRmqyU+goQwudbMIu66qsg="
     },
-    "nixpkgs": {
-      "type": "Channel",
-      "name": "nixos-25.05",
-      "url": "https://releases.nixos.org/nixos/25.05/nixos-25.05.813221.9a7b80b6f82a/nixexprs.tar.xz",
-      "hash": "1fqx9lvgr7wizmdca39yp2qd2xwps1dyv9zxqzrxkx50hk809jji"
+    "nixpkgs-xr": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "nixpkgs-xr"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "954f980ce3c50557936d104e0bedd3423fe027b3",
+      "url": "https://github.com/nix-community/nixpkgs-xr/archive/954f980ce3c50557936d104e0bedd3423fe027b3.tar.gz",
+      "hash": "sha256-5uPHRwT6QZjE26FFY8mSY0wvab+nxPfJG+oRIgUR/cQ="
+    },
+    "numen-nix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NotEqualToZero",
+        "repo": "numen-nix"
+      },
+      "branch": "nixpkgs",
+      "submodules": false,
+      "revision": "be2bce6ecdca34a54f2b261465064370138855e9",
+      "url": "https://github.com/NotEqualToZero/numen-nix/archive/be2bce6ecdca34a54f2b261465064370138855e9.tar.gz",
+      "hash": "sha256-b8dDHs4lfjsnq7or8UW1WPvj/fHeZ19UUNA0GsDwzbE="
+    },
+    "ody-nix-dev": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NotEqualToZero",
+        "repo": "odysseus-nix"
+      },
+      "branch": "dev",
+      "submodules": false,
+      "revision": "e5044feed97bf2f1786d0f617234daec695a526b",
+      "url": "https://github.com/NotEqualToZero/odysseus-nix/archive/e5044feed97bf2f1786d0f617234daec695a526b.tar.gz",
+      "hash": "sha256-QHU9wMbMJS7UwXxgF3LtAa5ovidlpSrimYiZlR1uoYQ="
+    },
+    "odysseus-nix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NotEqualToZero",
+        "repo": "odysseus-nix"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "556fae2b93d98cf9f1b7c347ac3b9e4acefdafe4",
+      "url": "https://github.com/NotEqualToZero/odysseus-nix/archive/556fae2b93d98cf9f1b7c347ac3b9e4acefdafe4.tar.gz",
+      "hash": "sha256-sY1vj7lo6KZfniyh+thS6/3k/53CvKo5zMfTnXNKYNU="
     },
     "pkgs-uns": {
       "type": "Channel",
       "name": "nixos-unstable",
-      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.05pre903292.2fad6eac6077/nixexprs.tar.xz",
-      "hash": "1c0c0a78466m07rr8z6wiixkn7s7lsy0y1cza3lg4ap2cwdl9zgb"
+      "artifact": "nixexprs.tar.xz",
+      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.11pre1075591.e554fab72f81/nixexprs.tar.xz",
+      "hash": "sha256-TAKa57gfBM/9a4IZrFaIQZhnHs9mXIFPlZbYrvhnaMY="
     },
     "sops-nix": {
       "type": "Git",
@@ -59,10 +233,103 @@
       },
       "branch": "master",
       "submodules": false,
-      "revision": "c482a1c1bbe030be6688ed7dc84f7213f304f1ec",
-      "url": "https://github.com/Mic92/sops-nix/archive/c482a1c1bbe030be6688ed7dc84f7213f304f1ec.tar.gz",
-      "hash": "1rwfwrqniym6y8nz71c1f7dz4jlszxzbggg4m4dx3h2fcibkhvyn"
+      "revision": "1e73e8f7176d65e1b55e324de099bbfff4b2c574",
+      "url": "https://github.com/Mic92/sops-nix/archive/1e73e8f7176d65e1b55e324de099bbfff4b2c574.tar.gz",
+      "hash": "sha256-k+I+R6uwHX3VcJ7326qLV6vCahZUgsVl+i8sSU/Stxk="
+    },
+    "st": {
+      "type": "GitRelease",
+      "repository": {
+        "type": "Git",
+        "url": "git://git.suckless.org/st"
+      },
+      "pre_releases": false,
+      "version_upper_bound": null,
+      "release_prefix": null,
+      "submodules": false,
+      "version": "0.9.3",
+      "revision": "6e970474743d57a5d8b054c41fd3bff2bc895742",
+      "url": null,
+      "hash": "sha256-Xr1JtaOMVgn+zsD39LFjP/0dkYkvaAXbEcYb3ptgYLA="
+    },
+    "st-custom": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "NotEqualToZero",
+        "repo": "suckless-st"
+      },
+      "branch": "custom",
+      "submodules": false,
+      "revision": "3805bb672729363556cf04233f23229e5b784bd4",
+      "url": "https://github.com/NotEqualToZero/suckless-st/archive/3805bb672729363556cf04233f23229e5b784bd4.tar.gz",
+      "hash": "sha256-0oqydPj1kfFxJG60ZFioSbbpiXtRu0WbAV6z5d8kRzw="
+    },
+    "talon-nix": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-community",
+        "repo": "talon-nix"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "a13f95e0d7b87d0127079245236bcd8705c6b4dd",
+      "url": "https://github.com/nix-community/talon-nix/archive/a13f95e0d7b87d0127079245236bcd8705c6b4dd.tar.gz",
+      "hash": "sha256-+qZasmBp556iAiIx5ZdiTS1yI4aiPZ7XHaCRk6UopME="
+    },
+    "unflake_github_mescon_logitech-trueforce-linux-driver": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "mescon",
+        "repo": "logitech-trueforce-linux-driver"
+      },
+      "branch": "master",
+      "submodules": false,
+      "revision": "8d22697360346e6d4c4169b3378f06dc34025998",
+      "url": "https://github.com/mescon/logitech-trueforce-linux-driver/archive/8d22697360346e6d4c4169b3378f06dc34025998.tar.gz",
+      "hash": "sha256-yiTBD/z+kunF9QwcSGEF+u4I+xt4F4OhAlAAWtaLXow="
+    },
+    "unflake_github_nix-systems_default": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nix-systems",
+        "repo": "default"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "da67096a3b9bf56a91d16901293e51ba5b49a27e",
+      "url": "https://github.com/nix-systems/default/archive/da67096a3b9bf56a91d16901293e51ba5b49a27e.tar.gz",
+      "hash": "sha256-Vy1rq5AaRuLzOxct8nz4T6wlgyUR7zLU309k9mBC768="
+    },
+    "unflake_github_nixos_nixpkgs_ref_nixos-unstable": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "nixos",
+        "repo": "nixpkgs"
+      },
+      "branch": "nixos-unstable",
+      "submodules": false,
+      "revision": "e554fab72f81915600f3f449b786fd9af40439a5",
+      "url": "https://github.com/nixos/nixpkgs/archive/e554fab72f81915600f3f449b786fd9af40439a5.tar.gz",
+      "hash": "sha256-ZKhUe/2IJUq1JhKxKMu8rbkgSGmPP2ZCqlIPn40aGCM="
+    },
+    "unflake_github_numtide_flake-utils": {
+      "type": "Git",
+      "repository": {
+        "type": "GitHub",
+        "owner": "numtide",
+        "repo": "flake-utils"
+      },
+      "branch": "main",
+      "submodules": false,
+      "revision": "11707dc2f618dd54ca8739b309ec4fc024de578b",
+      "url": "https://github.com/numtide/flake-utils/archive/11707dc2f618dd54ca8739b309ec4fc024de578b.tar.gz",
+      "hash": "sha256-l0KFg5HjrsfsO/JpG+r7fRrqm12kzFHyUHqHCVpMMbI="
     }
   },
-  "version": 5
+  "version": 8
 }

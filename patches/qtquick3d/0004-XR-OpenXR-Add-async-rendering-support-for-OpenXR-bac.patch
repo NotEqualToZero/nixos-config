@@ -1,0 +1,1319 @@
+From 09cb8e92305308449abc2619020469045ad7edc1 Mon Sep 17 00:00:00 2001
+From: Stanislav Aleksandrov <lightofmysoul@gmail.com>
+Date: Tue, 24 Mar 2026 07:56:51 +0000
+Subject: [PATCH 4/6] XR: OpenXR: Add async rendering support for OpenXR
+ backend
+
+Optional multithreaded rendering for the OpenXR backend, controlled by
+QT_QUICK3D_XR_ASYNC_RENDER=1
+
+Works with both multiview and non-multiview rendering. For multiview,
+the full render pass runs async. For non-multiview stereo, all eyes
+except the last render synchronously on the worker while the main
+thread is blocked; the last eye's render + endFrame runs while the
+main thread is free.
+
+Change-Id: I7936cec74a61617720ecc824e118636d1dad369f
+---
+ .../openxr/qquick3dxrmanager_openxr.cpp       | 920 ++++++++++++------
+ .../openxr/qquick3dxrmanager_openxr_p.h       |  96 +-
+ 2 files changed, 694 insertions(+), 322 deletions(-)
+
+diff --git a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+index 923af1996..3908ff86b 100644
+--- a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
++++ b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+@@ -21,6 +21,7 @@
+ #include <QtQuick/qquickrendercontrol.h>
+ 
+ #include <QtGui/qquaternion.h>
++#include <QtGui/rhi/qrhi.h>
+ 
+ #include <QtCore/qobject.h>
+ 
+@@ -153,6 +154,23 @@ QT_BEGIN_NAMESPACE
+ 
+ Q_DECLARE_LOGGING_CATEGORY(lcQuick3DXr);
+ 
++// Moves the render control (and GL context for OpenGL) to the target thread.
++// For OpenGL, doneCurrent() must be called before moveToThread().
++static void moveRenderControlToThread(QQuickRenderControl *renderControl, QThread *thread)
++{
++#if defined(XR_USE_GRAPHICS_API_OPENGL) || defined(XR_USE_GRAPHICS_API_OPENGL_ES)
++    QRhi *rhi = renderControl->rhi();
++    if (rhi && rhi->backend() == QRhi::OpenGLES2) {
++        const auto *glNH = static_cast<const QRhiGles2NativeHandles *>(rhi->nativeHandles());
++        if (glNH && glNH->context) {
++            glNH->context->doneCurrent();
++            glNH->context->moveToThread(thread);
++        }
++    }
++#endif
++    renderControl->prepareThread(thread);
++}
++
+ static const char s_workerThreadName[] = "QQuick3DXrWorkerThread";
+ 
+ class QQuick3DOpenXRThreadWorker : public QObject
+@@ -164,9 +182,13 @@ public:
+     {
+     }
+ 
++    void setManagerPrivate(QQuick3DXrManagerPrivate *d) { m_managerPrivate = d; }
++
+     using EventT = std::underlying_type_t<QEvent::Type>;
+     enum Event : EventT {
+         WaitForFrame = QEvent::User + 1,
++        RenderFrame = QEvent::User + 2,
++        Cleanup = QEvent::User + 3,
+     };
+ 
+     static constexpr QEvent::Type asQEvent(QQuick3DOpenXRThreadWorker::Event event)
+@@ -176,7 +198,17 @@ public:
+ 
+     void startWaitingForFrame()
+     {
+-        QCoreApplication::postEvent(this, new QEvent(QQuick3DOpenXRThreadWorker::asQEvent(QQuick3DOpenXRThreadWorker::Event::WaitForFrame)));
++        QCoreApplication::postEvent(this, new QEvent(asQEvent(Event::WaitForFrame)));
++    }
++
++    void startRendering()
++    {
++        QCoreApplication::postEvent(this, new QEvent(asQEvent(Event::RenderFrame)));
++    }
++
++    void requestCleanup()
++    {
++        QCoreApplication::postEvent(this, new QEvent(asQEvent(Event::Cleanup)));
+     }
+ 
+ protected:
+@@ -188,6 +220,15 @@ protected:
+             emit frameWaited(result.first, result.second);
+             return true;
+         }
++        case Event::RenderFrame: {
++            const bool success = m_managerPrivate->renderFrameOnWorker();
++            emit frameRendered(success);
++            return true;
++        }
++        case Event::Cleanup: {
++            m_managerPrivate->cleanupOnWorker();
++            return true;
++        }
+         default:
+             return QObject::event(event);
+         }
+@@ -195,9 +236,11 @@ protected:
+ 
+ signals:
+     void frameWaited(XrResult result, const XrFrameState &frameState);
++    void frameRendered(bool success);
+ 
+ private:
+     XrSession m_session = XR_NULL_HANDLE;
++    QQuick3DXrManagerPrivate *m_managerPrivate = nullptr;
+ };
+ 
+ void QQuick3DXrManagerPrivate::setErrorString(XrResult result, const char *callName)
+@@ -349,7 +392,7 @@ bool QQuick3DXrManagerPrivate::setupGraphics(QQuickWindow *window)
+ void QQuick3DXrManagerPrivate::update()
+ {
+     Q_Q(QQuick3DXrManager);
+-    if (m_waitingForFrame) {
++    if (m_waitingForFrame || m_renderingFrame) {
+         m_wantUpdate = true;
+         return;
+     }
+@@ -394,7 +437,7 @@ void QQuick3DXrManagerPrivate::doRenderFrame()
+ {
+     Q_ASSERT(m_session != XR_NULL_HANDLE);
+ 
+-    if (m_waitingForFrame)
++    if (m_waitingForFrame || m_renderingFrame)
+         return;
+     m_waitingForFrame = true;
+ 
+@@ -409,69 +452,387 @@ void QQuick3DXrManagerPrivate::doRenderFrame()
+ 
+ void QQuick3DXrManagerPrivate::onFrameWaitCompleted(XrResult result, const XrFrameState &frameState)
+ {
++    Q_Q(QQuick3DXrManager);
++
+     if (!m_waitingForFrame)
+         return;
+     m_waitingForFrame = false;
++    m_renderingFrame = true;
+ 
+     if (!checkXrResult(result)) {
+         qWarning("xrWaitFrame failed");
++        onFrameRenderCompleted(false);
++        return;
++    }
++
++    m_frameData.frameState = frameState;
++    m_frameData.multiviewRendering = m_multiviewRendering;
++    m_frameData.fbPassthroughActive = updateFBPassthroughState();
++    m_frameData.submitLayerDepth = m_submitLayerDepth;
++    m_frameData.environmentBlendMode = m_environmentBlendMode;
++
++    if (frameState.shouldRender != XR_TRUE) {
++        onFrameRenderCompleted(submitEmptyFrame());
++        return;
++    }
++
++    if (!prepareScene(frameState.predictedDisplayTime, frameState.predictedDisplayPeriod)) {
++        onFrameRenderCompleted(submitEmptyFrame());
++        return;
++    }
++
++    q->m_renderControl->polishItems();
++
++    if (!beginFrame()) {
++        onFrameRenderCompleted(false);
++        return;
++    }
++
++    if (m_asyncRenderEnabled && m_worker) {
++        postEventAndWait([this]() { m_worker->startRendering(); });
++        // onFrameRenderCompleted() will be called via frameRendered signal
+     } else {
+-        doRenderFrameAferWait(frameState);
++        bool success;
++        if (renderNonLastEyes()) {
++            beginRhiFrameAndSync();
++            success = renderLastEyeAndSubmit();
++        } else {
++            success = submitXrEndFrame();
++        }
++        onFrameRenderCompleted(success);
+     }
++}
+ 
++void QQuick3DXrManagerPrivate::onFrameRenderCompleted(bool success)
++{
++    if (!m_renderingFrame)
++        return;
++    m_renderingFrame = false;
++
++    if (!success) {
++        Q_Q(QQuick3DXrManager);
++        emit q->sessionEnded();
++        return;
++    }
++
++    scheduleUpdate();
++}
++
++void QQuick3DXrManagerPrivate::scheduleUpdate()
++{
+     if (m_wantUpdate) {
+         m_wantUpdate = false;
+         update();
+     }
+ }
+ 
+-void QQuick3DXrManagerPrivate::doRenderFrameAferWait(const XrFrameState &frameState)
++bool QQuick3DXrManagerPrivate::prepareScene(XrTime predictedDisplayTime,
++                                             XrDuration predictedDisplayPeriod)
+ {
+-    Q_ASSERT(m_session != XR_NULL_HANDLE);
++    Q_Q(QQuick3DXrManager);
++    auto *xrOrigin = q->m_xrOrigin;
++    auto *animationDriver = q->m_animationDriver;
++
++    XrViewState viewState{};
++    viewState.type = XR_TYPE_VIEW_STATE;
++    quint32 viewCapacityInput = m_views.size();
++
++    // Check if we need to update the app space before we use it
++    updateAppSpace(predictedDisplayTime);
++
++    XrViewLocateInfo viewLocateInfo{};
++    viewLocateInfo.type = XR_TYPE_VIEW_LOCATE_INFO;
++    viewLocateInfo.viewConfigurationType = m_viewConfigType;
++    viewLocateInfo.displayTime = predictedDisplayTime;
++    viewLocateInfo.space = m_appSpace;
++
++    XrResult res = xrLocateViews(m_session, &viewLocateInfo, &viewState,
++                                  viewCapacityInput, &m_frameData.viewCountOutput, m_views.data());
++    if (!XR_UNQUALIFIED_SUCCESS(res)) {
++        qCDebug(lcQuick3DXr, "xrLocateViews returned qualified success code: %s", to_string(res));
++        return false;
++    }
++
++    Q_ASSERT(m_frameData.viewCountOutput == viewCapacityInput);
++    Q_ASSERT(static_cast<qsizetype>(m_frameData.viewCountOutput) == m_configViews.size());
++    Q_ASSERT(static_cast<qsizetype>(m_frameData.viewCountOutput) == m_projectionLayerViews.size());
++    Q_ASSERT(m_multiviewRendering ? m_frameData.viewCountOutput == m_swapchains[0].arraySize
++                                  : static_cast<qsizetype>(m_frameData.viewCountOutput) == m_swapchains.size());
++
++    // Update the camera/head position
++    XrSpaceLocation location{};
++    location.type = XR_TYPE_SPACE_LOCATION;
++    if (checkXrResult(xrLocateSpace(m_viewSpace, m_appSpace, predictedDisplayTime, &location))) {
++        QVector3D position = QVector3D(location.pose.position.x,
++                                       location.pose.position.y,
++                                       location.pose.position.z) * 100.0f; // convert m to cm
++        QQuaternion rotation(location.pose.orientation.w,
++                             location.pose.orientation.x,
++                             location.pose.orientation.y,
++                             location.pose.orientation.z);
++
++        xrOrigin->updateTrackedCamera(position, rotation);
++    }
++
++    // Set the hand positions
++    if (QSSG_GUARD(m_inputManager != nullptr))
++        QQuick3DXrInputManagerPrivate::get(m_inputManager)->updatePoses(predictedDisplayTime, m_appSpace);
++
++    // Spatial Anchors
++    if (m_spaceExtension)
++        m_spaceExtension->updateAnchors(predictedDisplayTime, m_appSpace);
++
++    if (m_handtrackingExtensionSupported && m_inputManager)
++        QQuick3DXrInputManagerPrivate::get(m_inputManager)->updateHandtracking(predictedDisplayTime, m_appSpace, m_handtrackingAimExtensionSupported);
+ 
++    // Before rendering individual views, advance the animation driver once according
++    // to the expected display time
++    const qint64 displayPeriodMS = predictedDisplayPeriod / 1000000;
++    const qint64 displayDeltaMS = (predictedDisplayTime - m_previousTime) / 1000000;
++
++    if (m_previousTime == 0 || !animationDriver->isRunning()) {
++        animationDriver->setStep(displayPeriodMS);
++    } else {
++        if (displayDeltaMS > displayPeriodMS)
++            animationDriver->setStep(displayPeriodMS);
++        else
++            animationDriver->setStep(displayDeltaMS);
++        animationDriver->advance();
++    }
++    m_previousTime = predictedDisplayTime;
++
++    // Update projection layer views with current view data
++    for (uint32_t i = 0; i < m_frameData.viewCountOutput; i++) {
++        m_projectionLayerViews[i].pose = m_views[i].pose;
++        m_projectionLayerViews[i].fov = m_views[i].fov;
++    }
++
++    // Set cameras for multiview (non-multiview cameras are set per-eye during rendering)
++    if (m_multiviewRendering)
++        updateCameraMultiview(0, m_frameData.viewCountOutput);
++
++    // Pre-compute depth camera info so the worker thread never needs to
++    // access QQuick3DXrEyeCamera objects (which live on the main thread).
++    m_frameData.viewDepthInfos.resize(m_frameData.viewCountOutput);
++    for (uint32_t i = 0; i < m_frameData.viewCountOutput; i++) {
++        QQuick3DXrEyeCamera *cam = xrOrigin ? xrOrigin->eyeCamera(i) : nullptr;
++        m_frameData.viewDepthInfos[i].nearZ = cam ? cam->clipNear() : 1.0f;
++        m_frameData.viewDepthInfos[i].farZ = cam ? cam->clipFar() : 10000.0f;
++    }
++
++    return true;
++}
++
++// Main-thread frame setup: xrBeginFrame, swapchain acquire, render target (multiview),
++// composition layers. Precondition: prepareScene() + polishItems() already called.
++bool QQuick3DXrManagerPrivate::beginFrame()
++{
+     XrFrameBeginInfo frameBeginInfo{};
+     frameBeginInfo.type = XR_TYPE_FRAME_BEGIN_INFO;
+     if (!checkXrResult(xrBeginFrame(m_session, &frameBeginInfo))) {
+         qWarning("xrBeginFrame failed");
+-        return;
++        return false;
+     }
+ 
+-    QVector<XrCompositionLayerBaseHeader*> layers;
++    // Acquire swapchain images (fast, just picks indices — no GPU wait).
++    XrSwapchainImageAcquireInfo acquireInfo{};
++    acquireInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO;
+ 
+-    XrCompositionLayerPassthroughFB passthroughCompLayer{};
+-    passthroughCompLayer.type = XR_TYPE_COMPOSITION_LAYER_PASSTHROUGH_FB;
+-    if (m_fbPassthroughEnabled) {
+-        if (m_passthroughLayer == XR_NULL_HANDLE)
+-            createMetaQuestPassthroughLayer();
+-        passthroughCompLayer.layerHandle = m_passthroughLayer;
+-        passthroughCompLayer.flags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+-        passthroughCompLayer.space = XR_NULL_HANDLE;
+-        layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&passthroughCompLayer));
+-    }
++    const quint32 swapchainCount = m_multiviewRendering ? 1 : m_frameData.viewCountOutput;
++    m_frameData.eyeSwapchainData.resize(swapchainCount);
+ 
+-    XrCompositionLayerProjection layer{};
+-    layer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION;
+-    layer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
+-    layer.layerFlags |= XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
+-    layer.layerFlags |= XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
++    for (quint32 i = 0; i < swapchainCount; i++) {
++        auto &eye = m_frameData.eyeSwapchainData[i];
++        eye = {};
+ 
+-    if (frameState.shouldRender == XR_TRUE) {
+-        if (renderLayer(frameState.predictedDisplayTime, frameState.predictedDisplayPeriod, layer)) {
+-            layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&layer));
++        uint32_t swapchainImageIndex = 0;
++        if (!checkXrResult(xrAcquireSwapchainImage(m_swapchains[i].handle, &acquireInfo, &swapchainImageIndex))) {
++            qWarning("Failed to acquire swapchain image (eye %d)", i);
++            submitXrEndFrame();
++            return false;
++        }
++        eye.swapchainImage = m_swapchainImages[m_swapchains[i].handle][swapchainImageIndex];
++
++        if (m_submitLayerDepth && !m_depthSwapchains.isEmpty()) {
++            uint32_t depthIdx = 0;
++            if (!checkXrResult(xrAcquireSwapchainImage(m_depthSwapchains[i].handle, &acquireInfo, &depthIdx))) {
++                qWarning("Failed to acquire depth swapchain image (eye %d)", i);
++                submitXrEndFrame();
++                return false;
++            }
++            eye.depthSwapchainImage = m_depthSwapchainImages[m_depthSwapchains[i].handle][depthIdx];
++            eye.hasDepthSwapchainImage = true;
+         }
+     }
+ 
++    // Copy projection layer views and depth infos into FrameData.
++    // From this point, worker only touches these copies — not the class members.
++    m_frameData.projectionLayerViews = m_projectionLayerViews;
++    m_frameData.layerDepthInfos = m_layerDepthInfos;
++
++    // Set window geometry (same dimensions for all eyes).
++    prepareWindowSize(m_frameData.projectionLayerViews[0].subImage);
++
++    // Render target is set before beginRhiFrameAndSync() — not here — because
++    // setSwapchainRenderTarget() may involve QRhi/GL calls that must
++    // happen on the thread owning the graphics context.
++    // For multiview: set in renderNonLastEyes() (no-op for eye loop) + caller before beginRhiFrameAndSync.
++    // For non-multiview: set per-eye in prepareEyeForRender().
++
++    // Build composition layers for xrEndFrame.
++    m_frameData.layers.clear();
++
++    m_frameData.passthroughCompLayer = {};
++    m_frameData.passthroughCompLayer.type = XR_TYPE_COMPOSITION_LAYER_PASSTHROUGH_FB;
++    if (m_frameData.fbPassthroughActive) {
++        m_frameData.passthroughCompLayer.layerHandle = m_passthroughLayer;
++        m_frameData.passthroughCompLayer.flags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
++        m_frameData.passthroughCompLayer.space = XR_NULL_HANDLE;
++        m_frameData.layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&m_frameData.passthroughCompLayer));
++    }
++    m_frameData.projLayer = {};
++    m_frameData.projLayer.type = XR_TYPE_COMPOSITION_LAYER_PROJECTION;
++    m_frameData.projLayer.layerFlags = XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT;
++    m_frameData.projLayer.layerFlags |= XR_COMPOSITION_LAYER_CORRECT_CHROMATIC_ABERRATION_BIT;
++    m_frameData.projLayer.layerFlags |= XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
++    m_frameData.projLayer.space = m_appSpace;
++    m_frameData.projLayer.viewCount = (uint32_t)m_frameData.projectionLayerViews.size();
++    m_frameData.projLayer.views = m_frameData.projectionLayerViews.data();
++    m_frameData.layers.push_back(reinterpret_cast<XrCompositionLayerBaseHeader*>(&m_frameData.projLayer));
++
++#if QT_CONFIG(graphicsframecapture)
++    if (m_frameCapture)
++        m_frameCapture->startCaptureFrame();
++#endif
++
++    return true;
++}
++
++// Submits an empty frame to maintain cadence when shouldRender is false.
++bool QQuick3DXrManagerPrivate::submitEmptyFrame()
++{
++    Q_ASSERT(m_session != XR_NULL_HANDLE);
++
++    XrFrameBeginInfo frameBeginInfo{};
++    frameBeginInfo.type = XR_TYPE_FRAME_BEGIN_INFO;
++    if (!checkXrResult(xrBeginFrame(m_session, &frameBeginInfo))) {
++        qWarning("xrBeginFrame failed");
++        return false;
++    }
++
++    return submitXrEndFrame();
++}
++
++// Submits xrEndFrame. If withLayers is true, includes the pre-built
++// composition layers from m_frameData. Otherwise submits an empty frame.
++bool QQuick3DXrManagerPrivate::submitXrEndFrame(bool withLayers)
++{
+     XrFrameEndInfo frameEndInfo{};
+     frameEndInfo.type = XR_TYPE_FRAME_END_INFO;
+-    frameEndInfo.displayTime = frameState.predictedDisplayTime;
+-    if (!m_fbPassthroughEnabled)
+-        frameEndInfo.environmentBlendMode = m_environmentBlendMode;
+-    else
+-        frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+-    frameEndInfo.layerCount = (uint32_t)layers.size();
+-    frameEndInfo.layers = layers.data();
+-    if (!checkXrResult(xrEndFrame(m_session, &frameEndInfo)))
++    frameEndInfo.displayTime = m_frameData.frameState.predictedDisplayTime;
++    frameEndInfo.environmentBlendMode = m_frameData.environmentBlendMode;
++    if (withLayers) {
++        frameEndInfo.layerCount = (uint32_t)m_frameData.layers.size();
++        frameEndInfo.layers = m_frameData.layers.data();
++    }
++    if (!checkXrResult(xrEndFrame(m_session, &frameEndInfo))) {
+         qWarning("xrEndFrame failed");
++        return false;
++    }
++    return true;
++}
++
++// Prepares everything before beginRhiFrameAndSync() for the last (or only) render pass.
++// For multiview: sets the render target (cameras already set by prepareScene).
++// For non-multiview: renders all eyes except the last synchronously,
++// then prepares the last eye (camera + render target).
++// Returns false if any eye's swapchain wait fails.
++bool QQuick3DXrManagerPrivate::renderNonLastEyes()
++{
++    if (m_multiviewRendering) {
++        // Set render target here (not in beginFrame) because it may involve
++        // QRhi/GL calls that must run on the thread owning the graphics context.
++        const auto &eye = m_frameData.eyeSwapchainData[0];
++        setSwapchainRenderTarget(m_frameData.projectionLayerViews[0].subImage,
++                                 eye.swapchainImage, eye.depthSwapchainImage);
++        return true;
++    }
++
++    const quint32 lastEye = m_frameData.viewCountOutput - 1;
++    for (quint32 i = 0; i < lastEye; i++) {
++        if (!renderEyeSync(i))
++            return false;
++    }
++    prepareEyeForRender(lastEye);
++    return true;
++}
++
++// Async rendering — runs on the worker thread.
++// Precondition: beginFrame() already called on main thread.
++bool QQuick3DXrManagerPrivate::renderFrameOnWorker()
++{
++    if (renderNonLastEyes()) {
++        beginRhiFrameAndSync();
++        wakeMainThread();
++        return renderLastEyeAndSubmit();
++    } else {
++        wakeMainThread();
++        return submitXrEndFrame();
++    }
++}
++
++// Handles the last eye: waits for GPU, renders, then cleans up and submits xrEndFrame.
++// For multiview the "last eye" is eye 0 (single render pass).
++// For non-multiview, non-last eyes were already rendered by renderEyeSync().
++bool QQuick3DXrManagerPrivate::renderLastEyeAndSubmit()
++{
++    Q_Q(QQuick3DXrManager);
++
++    // The last eye's swapchain index: multiview uses swapchain 0,
++    // non-multiview uses the last per-eye swapchain.
++    const quint32 lastSwapchain = m_frameData.multiviewRendering ? 0 : m_frameData.viewCountOutput - 1;
++    const auto &lastEye = m_frameData.eyeSwapchainData[lastSwapchain];
++
++    // Wait for GPU to finish with the last eye's swapchain image.
++    XrSwapchainImageWaitInfo waitInfo{};
++    waitInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO;
++    waitInfo.timeout = XR_INFINITE_DURATION;
++    if (!checkXrResult(xrWaitSwapchainImage(m_swapchains[lastSwapchain].handle, &waitInfo))) {
++        qWarning("Failed to wait for swapchain image (eye %d)", lastSwapchain);
++        q->m_renderControl->endFrame();
++        submitXrEndFrame();
++        return false;
++    }
++    if (lastEye.hasDepthSwapchainImage) {
++        if (!checkXrResult(xrWaitSwapchainImage(m_depthSwapchains[lastSwapchain].handle, &waitInfo))) {
++            qWarning("Failed to wait for depth swapchain image (eye %d)", lastSwapchain);
++            q->m_renderControl->endFrame();
++            submitXrEndFrame();
++            return false;
++        }
++    }
++
++    rhiRenderAndEndFrame();
++    emit q->frameReady();
++
++#if QT_CONFIG(graphicsframecapture)
++    if (m_frameCapture)
++        m_frameCapture->endCaptureFrame();
++#endif
++
++    // Depth info for the last eye. For multiview, this covers all views.
++    // For non-multiview, non-last eyes' depth info was set by renderEyeSync().
++    if (m_frameData.multiviewRendering) {
++        for (quint32 i = 0; i < m_frameData.viewCountOutput; i++)
++            setupDepthInfoForEye(i);
++    } else {
++        setupDepthInfoForEye(lastSwapchain);
++    }
++
++    if (!releaseSwapchainForEye(lastSwapchain))
++        return false;
++
++    return submitXrEndFrame(true);
+ }
+ 
+ bool QQuick3DXrManagerPrivate::finalizeGraphics(QRhi *rhi)
+@@ -637,8 +998,18 @@ bool QQuick3DXrManagerPrivate::initialize()
+     }
+ 
+     const bool disableAsyncWait = qEnvironmentVariableIntValue("QT_QUICK3D_XR_DISABLE_ASYNC_WAIT") != 0;
+-    if (Q_LIKELY(!disableAsyncWait))
++    if (Q_LIKELY(!disableAsyncWait)) {
+         initWorkerThread();
++        m_asyncRenderEnabled = qEnvironmentVariableIntValue("QT_QUICK3D_XR_ASYNC_RENDER") != 0;
++        if (m_asyncRenderEnabled) {
++            qCDebug(lcQuick3DXr, "Async rendering enabled");
++            // Move the scene graph render context to the worker thread.
++            // QRhi requires all operations on a single thread.
++            // For OpenGL, the GL context must also be explicitly moved
++            // (Vulkan/D3D/Metal don't have thread-bound contexts).
++            moveRenderControlToThread(q->m_renderControl, m_workerThread);
++        }
++    }
+ 
+     // Meta Quest Specific Setup
+     if (m_colorspaceExtensionSupported)
+@@ -670,7 +1041,9 @@ void QQuick3DXrManagerPrivate::teardown()
+ {
+     m_waitingForFrame = false;
+     m_wantUpdate = false;
++    m_renderingFrame = false;
+     destroyWorkerThread();
++    m_asyncRenderEnabled = false;
+ 
+     if (m_inputManager) {
+         QQuick3DXrInputManagerPrivate::get(m_inputManager)->teardown();
+@@ -686,6 +1059,7 @@ void QQuick3DXrManagerPrivate::teardown()
+         destroyMetaQuestPassthroughLayer();
+     if (m_passthroughFeature)
+         destroyMetaQuestPassthrough();
++    m_fbPassthroughActive = false;
+ 
+     destroySwapchain();
+ 
+@@ -722,6 +1096,7 @@ void QQuick3DXrManagerPrivate::initWorkerThread()
+     m_workerThread->setObjectName(QLatin1StringView(s_workerThreadName));
+ 
+     m_worker = new QQuick3DOpenXRThreadWorker(m_session);
++    m_worker->setManagerPrivate(this);
+     m_worker->moveToThread(m_workerThread);
+ 
+     QObject::connect(
+@@ -731,6 +1106,13 @@ void QQuick3DXrManagerPrivate::initWorkerThread()
+             [this](XrResult result, const XrFrameState &frameState) { onFrameWaitCompleted(result, frameState); },
+             Qt::QueuedConnection);
+ 
++    QObject::connect(
++            m_worker,
++            &QQuick3DOpenXRThreadWorker::frameRendered,
++            q,
++            [this](bool success) { onFrameRenderCompleted(success); },
++            Qt::QueuedConnection);
++
+     QObject::connect(m_workerThread, &QThread::finished, m_worker, &QObject::deleteLater);
+ 
+     m_workerThread->start();
+@@ -739,6 +1121,12 @@ void QQuick3DXrManagerPrivate::initWorkerThread()
+ void QQuick3DXrManagerPrivate::destroyWorkerThread()
+ {
+     if (m_workerThread) {
++        // Following the canonical QQuickRenderControl threaded teardown pattern
++        // (see qtdeclarative/examples/quick/rendercontrol/rendercontrol_opengl):
++        // Post a cleanup event to the worker and wait for it to finish.
++        if (m_asyncRenderEnabled && m_worker)
++            postEventAndWait([this]() { m_worker->requestCleanup(); });
++
+         m_workerThread->quit();
+         m_workerThread->wait();
+         delete m_workerThread;
+@@ -748,6 +1136,21 @@ void QQuick3DXrManagerPrivate::destroyWorkerThread()
+     }
+ }
+ 
++// Runs on the worker thread during shutdown.
++// Invalidates scene graph resources (while QRhi/GL is on this thread),
++// then moves the GL context and render context back to the main thread.
++void QQuick3DXrManagerPrivate::cleanupOnWorker()
++{
++    Q_Q(QQuick3DXrManager);
++
++    if (q->m_renderControl) {
++        q->m_renderControl->invalidate();
++        moveRenderControlToThread(q->m_renderControl, q->thread());
++    }
++
++    wakeMainThread();
++}
++
+ void QQuick3DXrManagerPrivate::checkReferenceSpaces()
+ {
+     Q_ASSERT(m_session != XR_NULL_HANDLE);
+@@ -1260,6 +1663,8 @@ void QQuick3DXrManagerPrivate::setSamples(int samples)
+ 
+     // No need to do anything more here (such as destroying and recreating the
+     // XrSwapchain) since we do not do MSAA through the swapchain.
++
++    checkDepthMsaaCompatibility();
+ }
+ 
+ QStringList QQuick3DXrManagerPrivate::enabledExtensions() const
+@@ -1313,22 +1718,8 @@ bool QQuick3DXrManagerPrivate::isPassthroughEnabled() const
+ void QQuick3DXrManagerPrivate::setFBPassthroughEnabled(bool enable)
+ {
+     m_fbPassthroughEnabled = enable;
+-    if (enable) {
+-        if (m_passthroughFeature == XR_NULL_HANDLE)
+-            createMetaQuestPassthrough();
+-        else
+-            startMetaQuestPassthrough();
+-
+-        if (m_passthroughLayer == XR_NULL_HANDLE)
+-            createMetaQuestPassthroughLayer();
+-        else
+-            resumeMetaQuestPassthroughLayer();
+-    } else {
+-        if (m_passthroughLayer)
+-            pauseMetaQuestPassthroughLayer();
+-        if (m_passthroughFeature)
+-            pauseMetaQuestPassthrough();
+-    }
++    // Actual XR state transitions are deferred to updateFBPassthroughState()
++    // which runs in beginFrame() on the main thread, before worker dispatch.
+ }
+ 
+ bool QQuick3DXrManagerPrivate::setTransparentBlendMode(bool enable)
+@@ -1370,6 +1761,23 @@ void QQuick3DXrManagerPrivate::setDepthSubmissionEnabled(bool enable)
+             qCDebug(lcQuick3DXr, "Enabling submitLayerDepth");
+ 
+         m_submitLayerDepth = enable;
++        checkDepthMsaaCompatibility();
++    }
++}
++
++void QQuick3DXrManagerPrivate::checkDepthMsaaCompatibility()
++{
++    Q_Q(QQuick3DXrManager);
++
++    if (!m_submitLayerDepth || m_samples <= 1)
++        return;
++
++    QRhi *rhi = q->m_renderControl ? q->m_renderControl->rhi() : nullptr;
++    if (rhi && !rhi->isFeatureSupported(QRhi::ResolveDepthStencil)) {
++        qWarning("Quick3D XR: Submitting depth buffer with MSAA cannot be enabled"
++                 " when depth-stencil resolve is not supported by the underlying 3D API (%s)",
++                 rhi->backendName());
++        m_submitLayerDepth = false;
+     }
+ }
+ 
+@@ -1506,292 +1914,149 @@ void QQuick3DXrManagerPrivate::pollEvents(bool *exitRenderLoop, bool *requestRes
+     }
+ }
+ 
+-bool QQuick3DXrManagerPrivate::renderLayer(XrTime predictedDisplayTime,
+-                                           XrDuration predictedDisplayPeriod,
+-                                           XrCompositionLayerProjection &layer)
++// Full sync render of one non-multiview eye: wait + camera + setRT + QRhi cycle + cleanup.
++// Called on the worker thread while main is blocked, or on main thread in sync mode.
++// Returns false if the swapchain wait fails (caller should abort the frame).
++bool QQuick3DXrManagerPrivate::renderEyeSync(quint32 eye)
+ {
+-    Q_Q(QQuick3DXrManager);
+-    auto *xrOrigin = q->m_xrOrigin;
+-    auto *animationDriver = q->m_animationDriver;
+-    auto *renderControl = q->m_renderControl;
+-
+-    XrResult res;
+-
+-    XrViewState viewState{};
+-    viewState.type = XR_TYPE_VIEW_STATE;
+-    quint32 viewCapacityInput = m_views.size();
+-    quint32 viewCountOutput;
+-
+-    // Check if we need to update the app space before we use it
+-    updateAppSpace(predictedDisplayTime);
+-
+-    XrViewLocateInfo viewLocateInfo{};
+-    viewLocateInfo.type = XR_TYPE_VIEW_LOCATE_INFO;
+-    viewLocateInfo.viewConfigurationType = m_viewConfigType;
+-    viewLocateInfo.displayTime = predictedDisplayTime;
+-    viewLocateInfo.space = m_appSpace;
++    const auto &eyeData = m_frameData.eyeSwapchainData[eye];
+ 
+-    res = xrLocateViews(m_session, &viewLocateInfo, &viewState, viewCapacityInput, &viewCountOutput, m_views.data());
+-    if (XR_UNQUALIFIED_SUCCESS(res)) {
+-        Q_ASSERT(viewCountOutput == viewCapacityInput);
+-        Q_ASSERT(static_cast<qsizetype>(viewCountOutput) == m_configViews.size());
+-        Q_ASSERT(static_cast<qsizetype>(viewCountOutput) == m_projectionLayerViews.size());
+-        Q_ASSERT(m_multiviewRendering ? viewCountOutput == m_swapchains[0].arraySize : static_cast<qsizetype>(viewCountOutput) == m_swapchains.size());
+-
+-        // Update the camera/head position
+-        XrSpaceLocation location{};
+-        location.type = XR_TYPE_SPACE_LOCATION;
+-        if (checkXrResult(xrLocateSpace(m_viewSpace, m_appSpace, predictedDisplayTime, &location))) {
+-            QVector3D position = QVector3D(location.pose.position.x,
+-                                           location.pose.position.y,
+-                                           location.pose.position.z) * 100.0f; // convert m to cm
+-            QQuaternion rotation(location.pose.orientation.w,
+-                                 location.pose.orientation.x,
+-                                 location.pose.orientation.y,
+-                                 location.pose.orientation.z);
+-
+-            xrOrigin->updateTrackedCamera(position, rotation);
++    // Wait for GPU to finish with this eye's swapchain image.
++    XrSwapchainImageWaitInfo waitInfo{};
++    waitInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO;
++    waitInfo.timeout = XR_INFINITE_DURATION;
++    if (!checkXrResult(xrWaitSwapchainImage(m_swapchains[eye].handle, &waitInfo))) {
++        qWarning("Failed to wait for swapchain image (eye %d)", eye);
++        return false;
++    }
++    if (eyeData.hasDepthSwapchainImage) {
++        if (!checkXrResult(xrWaitSwapchainImage(m_depthSwapchains[eye].handle, &waitInfo))) {
++            qWarning("Failed to wait for depth swapchain image (eye %d)", eye);
++            return false;
+         }
++    }
+ 
+-        // Set the hand positions
+-        if (QSSG_GUARD(m_inputManager != nullptr))
+-            QQuick3DXrInputManagerPrivate::get(m_inputManager)->updatePoses(predictedDisplayTime, m_appSpace);
+-
+-        // Spatial Anchors
+-        if (m_spaceExtension)
+-            m_spaceExtension->updateAnchors(predictedDisplayTime, m_appSpace);
++    prepareEyeForRender(eye);
++    beginRhiFrameAndSync();
++    rhiRenderAndEndFrame();
++    setupDepthInfoForEye(eye);
++    return releaseSwapchainForEye(eye);
++}
+ 
+-        if (m_handtrackingExtensionSupported && m_inputManager)
+-            QQuick3DXrInputManagerPrivate::get(m_inputManager)->updateHandtracking(predictedDisplayTime, m_appSpace, m_handtrackingAimExtensionSupported);
++// Prepare a non-multiview eye for rendering: camera + render target.
++// Called on the worker thread while main is blocked.
++// Does NOT wait for the swapchain — the wait happens later in renderLastEyeAndSubmit().
++void QQuick3DXrManagerPrivate::prepareEyeForRender(quint32 eye)
++{
++    const auto &eyeData = m_frameData.eyeSwapchainData[eye];
+ 
+-        // Before rendering individual views, advance the animation driver once according
+-        // to the expected display time
++    m_frameData.projectionLayerViews[eye].subImage.swapchain = m_swapchains[eye].handle;
++    m_frameData.projectionLayerViews[eye].subImage.imageArrayIndex = 0;
+ 
+-        const qint64 displayPeriodMS = predictedDisplayPeriod / 1000000;
+-        const qint64 displayDeltaMS = (predictedDisplayTime - m_previousTime) / 1000000;
++    updateCameraNonMultiview(eye, m_frameData.projectionLayerViews[eye]);
++    setSwapchainRenderTarget(m_frameData.projectionLayerViews[eye].subImage,
++                             eyeData.swapchainImage, eyeData.depthSwapchainImage);
++}
+ 
+-        if (m_previousTime == 0 || !animationDriver->isRunning()) {
+-            animationDriver->setStep(displayPeriodMS);
+-        } else {
+-            if (displayDeltaMS > displayPeriodMS)
+-                animationDriver->setStep(displayPeriodMS);
+-            else
+-                animationDriver->setStep(displayDeltaMS);
+-            animationDriver->advance();
+-        }
+-        m_previousTime = predictedDisplayTime;
++void QQuick3DXrManagerPrivate::setupDepthInfoForEye(quint32 eye)
++{
++    const quint32 swapchainIdx = m_frameData.multiviewRendering ? 0 : eye;
++    const auto &eyeData = m_frameData.eyeSwapchainData[swapchainIdx];
+ 
+-#if QT_CONFIG(graphicsframecapture)
+-        if (m_frameCapture)
+-            m_frameCapture->startCaptureFrame();
+-#endif
++    if (m_frameData.submitLayerDepth && eyeData.hasDepthSwapchainImage) {
++        m_frameData.layerDepthInfos[eye].minDepth = 0;
++        m_frameData.layerDepthInfos[eye].maxDepth = 1;
++        m_frameData.layerDepthInfos[eye].nearZ = m_frameData.viewDepthInfos[eye].nearZ;
++        m_frameData.layerDepthInfos[eye].farZ = m_frameData.viewDepthInfos[eye].farZ;
++        m_frameData.projectionLayerViews[eye].next = &m_frameData.layerDepthInfos[eye];
+ 
+-        if (m_submitLayerDepth && m_samples > 1) {
+-            if (!renderControl->rhi()->isFeatureSupported(QRhi::ResolveDepthStencil)) {
+-                static bool warned = false;
+-                if (!warned) {
+-                    warned = true;
+-                    qWarning("Quick3D XR: Submitting depth buffer with MSAA cannot be enabled"
+-                             " when depth-stencil resolve is not supported by the underlying 3D API (%s)",
+-                             renderControl->rhi()->backendName());
+-                }
+-                m_submitLayerDepth = false;
+-            }
++        // Non-multiview: set per-eye depth subImage (multiview is set during createSwapchains).
++        if (!m_frameData.multiviewRendering && !m_depthSwapchains.isEmpty()) {
++            m_frameData.layerDepthInfos[eye].subImage.swapchain = m_depthSwapchains[eye].handle;
++            m_frameData.layerDepthInfos[eye].subImage.imageArrayIndex = 0;
+         }
++    } else {
++        m_frameData.projectionLayerViews[eye].next = nullptr;
++    }
++}
+ 
+-        if (m_multiviewRendering) {
+-            const Swapchain swapchain = m_swapchains[0];
+-
+-            // Acquire the swapchain image array
+-            XrSwapchainImageAcquireInfo acquireInfo{};
+-            acquireInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO;
+-            uint32_t swapchainImageIndex = 0;
+-            if (!checkXrResult(xrAcquireSwapchainImage(swapchain.handle, &acquireInfo, &swapchainImageIndex))) {
+-                qWarning("Failed to acquire swapchain image (multiview)");
+-                return false;
+-            }
+-            XrSwapchainImageWaitInfo waitInfo{};
+-            waitInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO;
+-            waitInfo.timeout = XR_INFINITE_DURATION;
+-            if (!checkXrResult(xrWaitSwapchainImage(swapchain.handle, &waitInfo))) {
+-                qWarning("Failed to wait for swapchain image (multiview)");
+-                return false;
+-            }
+-            XrSwapchainImageBaseHeader *swapchainImage = m_swapchainImages[swapchain.handle][swapchainImageIndex];
+-
+-            XrSwapchainImageBaseHeader *depthSwapchainImage = nullptr;
+-            if (m_submitLayerDepth && !m_depthSwapchains.isEmpty()) {
+-                if (checkXrResult(xrAcquireSwapchainImage(m_depthSwapchains[0].handle, &acquireInfo, &swapchainImageIndex))) {
+-                    if (checkXrResult(xrWaitSwapchainImage(m_depthSwapchains[0].handle, &waitInfo)))
+-                        depthSwapchainImage = m_depthSwapchainImages[m_depthSwapchains[0].handle][swapchainImageIndex];
+-                    else
+-                        qWarning("Failed to wait for depth swapchain image (multiview)");
+-                } else {
+-                    qWarning("Failed to acquire depth swapchain image (multiview)");
+-                }
+-            }
+-
+-            // First update both cameras with the latest view information and
+-            // then set them on the viewport (since this is going to be
+-            // multiview rendering).
+-            for (uint32_t i = 0; i < viewCountOutput; i++) {
+-                // subImage.swapchain and imageArrayIndex are already set and correct
+-                m_projectionLayerViews[i].pose = m_views[i].pose;
+-                m_projectionLayerViews[i].fov = m_views[i].fov;
+-            }
+-            updateCameraMultiview(0, viewCountOutput);
+-
+-            // Perform the rendering. In multiview mode it is done just once,
+-            // targeting all the views (outputting simultaneously to all texture
+-            // array layers). The subImage dimensions are the same, that's why
+-            // passing in the first layerView's subImage works.
+-            doRender(m_projectionLayerViews[0].subImage,
+-                     swapchainImage,
+-                     depthSwapchainImage);
+-
+-            for (uint32_t i = 0; i < viewCountOutput; i++) {
+-                if (m_submitLayerDepth) {
+-                    m_layerDepthInfos[i].minDepth = 0;
+-                    m_layerDepthInfos[i].maxDepth = 1;
+-                    QQuick3DXrEyeCamera *cam = xrOrigin ? xrOrigin->eyeCamera(i) : nullptr;
+-                    m_layerDepthInfos[i].nearZ = cam ? cam->clipNear() : 1.0f;
+-                    m_layerDepthInfos[i].farZ = cam ? cam->clipFar() : 10000.0f;
+-                    m_projectionLayerViews[i].next = &m_layerDepthInfos[i];
+-                } else {
+-                    m_projectionLayerViews[i].next = nullptr;
+-                }
+-            }
+-
+-            // release the swapchain image array
+-            XrSwapchainImageReleaseInfo releaseInfo{};
+-            releaseInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO;
+-            if (!checkXrResult(xrReleaseSwapchainImage(swapchain.handle, &releaseInfo)))
+-                qWarning("Failed to release swapchain image");
+-            if (depthSwapchainImage) {
+-                if (!checkXrResult(xrReleaseSwapchainImage(m_depthSwapchains[0].handle, &releaseInfo)))
+-                    qWarning("Failed to release depth swapchain image");
+-            }
+-        } else {
+-            for (uint32_t i = 0; i < viewCountOutput; i++) {
+-                // Each view has a separate swapchain which is acquired, rendered to, and released.
+-                const Swapchain viewSwapchain = m_swapchains[i];
+-
+-                // Render view to the appropriate part of the swapchain image.
+-                XrSwapchainImageAcquireInfo acquireInfo{};
+-                acquireInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO;
+-                uint32_t swapchainImageIndex = 0;
+-                if (!checkXrResult(xrAcquireSwapchainImage(viewSwapchain.handle, &acquireInfo, &swapchainImageIndex))) {
+-                    qWarning("Failed to acquire swapchain image");
+-                    return false;
+-                }
+-                XrSwapchainImageWaitInfo waitInfo{};
+-                waitInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_WAIT_INFO;
+-                waitInfo.timeout = XR_INFINITE_DURATION;
+-                if (!checkXrResult(xrWaitSwapchainImage(viewSwapchain.handle, &waitInfo))) {
+-                    qWarning("Failed to wait for swapchain image");
+-                    return false;
+-                }
+-                XrSwapchainImageBaseHeader *swapchainImage = m_swapchainImages[viewSwapchain.handle][swapchainImageIndex];
+-
+-                XrSwapchainImageBaseHeader *depthSwapchainImage = nullptr;
+-                if (m_submitLayerDepth && !m_depthSwapchains.isEmpty()) {
+-                    if (checkXrResult(xrAcquireSwapchainImage(m_depthSwapchains[i].handle, &acquireInfo, &swapchainImageIndex))) {
+-                        if (checkXrResult(xrWaitSwapchainImage(m_depthSwapchains[i].handle, &waitInfo)))
+-                            depthSwapchainImage = m_depthSwapchainImages[m_depthSwapchains[i].handle][swapchainImageIndex];
+-                        else
+-                            qWarning("Failed to wait for depth swapchain image");
+-                    } else {
+-                        qWarning("Failed to acquire depth swapchain image");
+-                    }
+-                }
+-
+-                m_projectionLayerViews[i].subImage.swapchain = viewSwapchain.handle;
+-                m_projectionLayerViews[i].subImage.imageArrayIndex = 0;
+-                m_projectionLayerViews[i].pose = m_views[i].pose;
+-                m_projectionLayerViews[i].fov = m_views[i].fov;
+-
+-                updateCameraNonMultiview(i, m_projectionLayerViews[i]);
+-
+-                doRender(m_projectionLayerViews[i].subImage,
+-                         swapchainImage,
+-                         depthSwapchainImage);
+-
+-                if (depthSwapchainImage) {
+-                    m_layerDepthInfos[i].subImage.swapchain = m_depthSwapchains[i].handle;
+-                    m_layerDepthInfos[i].subImage.imageArrayIndex = 0;
+-                    m_layerDepthInfos[i].minDepth = 0;
+-                    m_layerDepthInfos[i].maxDepth = 1;
+-                    QQuick3DXrEyeCamera *cam = xrOrigin ? xrOrigin->eyeCamera(i) : nullptr;
+-                    m_layerDepthInfos[i].nearZ = cam ? cam->clipNear() : 1.0f;
+-                    m_layerDepthInfos[i].farZ = cam ? cam->clipFar() : 10000.0f;
+-                    m_projectionLayerViews[i].next = &m_layerDepthInfos[i];
+-                } else {
+-                    m_projectionLayerViews[i].next = nullptr;
+-                }
+-
+-                XrSwapchainImageReleaseInfo releaseInfo{};
+-                releaseInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO;
+-                if (!checkXrResult(xrReleaseSwapchainImage(viewSwapchain.handle, &releaseInfo)))
+-                    qWarning("Failed to release swapchain image");
+-                if (depthSwapchainImage) {
+-                    if (!checkXrResult(xrReleaseSwapchainImage(m_depthSwapchains[i].handle, &releaseInfo)))
+-                        qWarning("Failed to release depth swapchain image");
+-                }
+-            }
++bool QQuick3DXrManagerPrivate::releaseSwapchainForEye(quint32 eye)
++{
++    const quint32 swapchainIdx = m_frameData.multiviewRendering ? 0 : eye;
++    XrSwapchainImageReleaseInfo releaseInfo{};
++    releaseInfo.type = XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO;
++    if (!checkXrResult(xrReleaseSwapchainImage(m_swapchains[swapchainIdx].handle, &releaseInfo))) {
++        qWarning("Failed to release swapchain image (eye %d)", eye);
++        return false;
++    }
++    if (m_frameData.eyeSwapchainData[swapchainIdx].hasDepthSwapchainImage) {
++        if (!checkXrResult(xrReleaseSwapchainImage(m_depthSwapchains[swapchainIdx].handle, &releaseInfo))) {
++            qWarning("Failed to release depth swapchain image (eye %d)", eye);
++            return false;
+         }
++    }
++    return true;
++}
+ 
+-#if QT_CONFIG(graphicsframecapture)
+-        if (m_frameCapture)
+-            m_frameCapture->endCaptureFrame();
+-#endif
++void QQuick3DXrManagerPrivate::prepareWindowSize(const XrSwapchainSubImage &subImage)
++{
++    Q_Q(QQuick3DXrManager);
++    auto *quickWindow = q->m_quickWindow;
+ 
+-        layer.space = m_appSpace;
+-        layer.viewCount = (uint32_t)m_projectionLayerViews.size();
+-        layer.views = m_projectionLayerViews.data();
+-        return true;
+-    }
++    quickWindow->setGeometry(0, 0,
++                             subImage.imageRect.extent.width,
++                             subImage.imageRect.extent.height);
++    quickWindow->contentItem()->setSize(QSizeF(subImage.imageRect.extent.width,
++                                               subImage.imageRect.extent.height));
++}
+ 
+-    qCDebug(lcQuick3DXr, "xrLocateViews returned qualified success code: %s", to_string(res));
+-    return false;
++void QQuick3DXrManagerPrivate::setSwapchainRenderTarget(const XrSwapchainSubImage &subImage,
++                                                         const XrSwapchainImageBaseHeader *swapchainImage,
++                                                         const XrSwapchainImageBaseHeader *depthSwapchainImage)
++{
++    Q_Q(QQuick3DXrManager);
++
++    const int arraySize = m_frameData.multiviewRendering ? m_swapchains[0].arraySize : 1;
++    q->m_quickWindow->setRenderTarget(m_graphics->renderTarget(subImage,
++                                                               swapchainImage,
++                                                               m_colorSwapchainFormat,
++                                                               m_samples,
++                                                               arraySize,
++                                                               depthSwapchainImage,
++                                                               m_depthSwapchainFormat));
+ }
+ 
+-void QQuick3DXrManagerPrivate::doRender(const XrSwapchainSubImage &subImage,
+-                                        const XrSwapchainImageBaseHeader *swapchainImage,
+-                                        const XrSwapchainImageBaseHeader *depthSwapchainImage)
++void QQuick3DXrManagerPrivate::beginRhiFrameAndSync()
+ {
+     Q_Q(QQuick3DXrManager);
++    q->m_renderControl->beginFrame();
++    q->m_renderControl->sync();
++}
+ 
+-    auto *quickWindow = q->m_quickWindow;
+-    auto *renderControl = q->m_renderControl;
+-
+-    const int arraySize = m_multiviewRendering ? m_swapchains[0].arraySize : 1;
+-    quickWindow->setRenderTarget(m_graphics->renderTarget(subImage,
+-                                                            swapchainImage,
+-                                                            m_colorSwapchainFormat,
+-                                                            m_samples,
+-                                                            arraySize,
+-                                                            depthSwapchainImage,
+-                                                            m_depthSwapchainFormat));
+-
+-    quickWindow->setGeometry(0,
+-                               0,
+-                               subImage.imageRect.extent.width,
+-                               subImage.imageRect.extent.height);
+-    quickWindow->contentItem()->setSize(QSizeF(subImage.imageRect.extent.width,
+-                                                 subImage.imageRect.extent.height));
++void QQuick3DXrManagerPrivate::rhiRenderAndEndFrame()
++{
++    Q_Q(QQuick3DXrManager);
++    q->m_renderControl->render();
++    q->m_renderControl->endFrame();
++}
+ 
+-    renderControl->polishItems();
+-    renderControl->beginFrame();
+-    renderControl->sync();
+-    renderControl->render();
+-    renderControl->endFrame();
++// Posts an event to the worker and blocks until wakeMainThread() is called.
++void QQuick3DXrManagerPrivate::postEventAndWait(const std::function<void()> &postFunc)
++{
++    m_syncMutex.lock();
++    m_syncReady = false;
++    postFunc();
++    while (!m_syncReady)
++        m_syncCondition.wait(&m_syncMutex);
++    m_syncMutex.unlock();
++}
+ 
+-    // With multiview this indicates that the frame with both eyes is ready from
+-    // the 3D APIs perspective. Without multiview this is done - and so the
+-    // signal is emitted - multiple times (twice) per "frame" (eye).
+-    QRhiRenderTarget *rt = QQuickWindowPrivate::get(quickWindow)->activeCustomRhiRenderTarget();
+-    if (rt->resourceType() == QRhiResource::TextureRenderTarget && static_cast<QRhiTextureRenderTarget *>(rt)->description().colorAttachmentAt(0)->texture())
+-        emit q->frameReady();
++void QQuick3DXrManagerPrivate::wakeMainThread()
++{
++    m_syncMutex.lock();
++    m_syncReady = true;
++    m_syncCondition.wakeOne();
++    m_syncMutex.unlock();
+ }
+ 
+ void QQuick3DXrManagerPrivate::setupMetaQuestColorSpaces()
+@@ -1926,6 +2191,33 @@ void QQuick3DXrManagerPrivate::setupMetaQuestFoveation()
+     }
+ }
+ 
++// Reconciles m_fbPassthroughEnabled (desired) with m_fbPassthroughActive (actual XR state).
++// Returns true if FB passthrough is active after the call.
++bool QQuick3DXrManagerPrivate::updateFBPassthroughState()
++{
++    if (m_fbPassthroughEnabled != m_fbPassthroughActive) {
++        if (m_fbPassthroughEnabled) {
++            if (m_passthroughFeature == XR_NULL_HANDLE)
++                createMetaQuestPassthrough();
++            else
++                startMetaQuestPassthrough();
++            if (m_passthroughLayer == XR_NULL_HANDLE)
++                createMetaQuestPassthroughLayer();
++            else
++                resumeMetaQuestPassthroughLayer();
++            m_fbPassthroughActive = (m_passthroughFeature != XR_NULL_HANDLE
++                                     && m_passthroughLayer != XR_NULL_HANDLE);
++        } else {
++            if (m_passthroughLayer)
++                pauseMetaQuestPassthroughLayer();
++            if (m_passthroughFeature)
++                pauseMetaQuestPassthrough();
++            m_fbPassthroughActive = false;
++        }
++    }
++    return m_fbPassthroughActive;
++}
++
+ void QQuick3DXrManagerPrivate::createMetaQuestPassthrough()
+ {
+     // According to the validation layer 'flags' cannot be 0, thus we make sure
+diff --git a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
+index b16685cb3..0345d0ca0 100644
+--- a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
++++ b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
+@@ -20,8 +20,10 @@
+ 
+ #include <QtCore/qmap.h>
+ #include <QtCore/qlist.h>
++#include <QtCore/qmutex.h>
+ #include <QtCore/qversionnumber.h>
+ #include <QtCore/qpointer.h>
++#include <QtCore/qwaitcondition.h>
+ 
+ #include <QtGui/private/qtgui-config_p.h>
+ #if QT_CONFIG(graphicsframecapture)
+@@ -100,6 +102,7 @@ public:
+ 
+ private:
+     friend class QQuick3DXrRuntimeInfo;
++    friend class QQuick3DOpenXRThreadWorker;
+ 
+     bool initialize();
+     void teardown();
+@@ -107,7 +110,28 @@ private:
+     void initWorkerThread();
+     void destroyWorkerThread();
+     void onFrameWaitCompleted(XrResult result, const XrFrameState &frameState);
+-    void doRenderFrameAferWait(const XrFrameState &frameState);
++    void onFrameRenderCompleted(bool success);
++    void scheduleUpdate();
++    bool prepareScene(XrTime predictedDisplayTime, XrDuration predictedDisplayPeriod);
++    bool submitEmptyFrame();
++
++    // Frame pipeline (used by both sync and async, multiview and non-multiview).
++    [[nodiscard]] bool beginFrame();
++    bool renderLastEyeAndSubmit();
++    bool submitXrEndFrame(bool withLayers = false);
++
++    // Per-eye helpers for non-multiview rendering.
++    [[nodiscard]] bool renderNonLastEyes();
++    [[nodiscard]] bool renderEyeSync(quint32 eye);
++    void prepareEyeForRender(quint32 eye);
++    void setupDepthInfoForEye(quint32 eye);
++    bool releaseSwapchainForEye(quint32 eye);
++
++    // Async rendering helpers.
++    bool renderFrameOnWorker();
++    void cleanupOnWorker();
++    void postEventAndWait(const std::function<void()> &postFunc);
++    void wakeMainThread();
+ 
+     void destroySwapchain();
+     void setErrorString(XrResult result, const char *callName);
+@@ -138,22 +162,27 @@ private:
+ 
+     bool createSwapchains();
+ 
+-    bool renderLayer(XrTime predictedDisplayTime,
+-                     XrDuration predictedDisplayPeriod,
+-                     XrCompositionLayerProjection &layer);
+-    void doRender(const XrSwapchainSubImage &subImage,
+-                  const XrSwapchainImageBaseHeader *swapchainImage,
+-                  const XrSwapchainImageBaseHeader *depthSwapchainImage = nullptr);
++    // Render building blocks — composed differently by sync and async paths.
++    void prepareWindowSize(const XrSwapchainSubImage &subImage);
++    void setSwapchainRenderTarget(const XrSwapchainSubImage &subImage,
++                                  const XrSwapchainImageBaseHeader *swapchainImage,
++                                  const XrSwapchainImageBaseHeader *depthSwapchainImage);
++    void beginRhiFrameAndSync();  // renderControl: beginFrame + sync
++    void rhiRenderAndEndFrame();  // renderControl: render + endFrame
+ 
+     void updateCameraHelper(QQuick3DXrEyeCamera *camera, const XrCompositionLayerProjectionView &layerView);
+     void updateCameraNonMultiview(int eye, const XrCompositionLayerProjectionView &layerView);
+     void updateCameraMultiview(int projectionLayerViewStartIndex, int count);
+ 
++    void checkDepthMsaaCompatibility();
++
+     void setupMetaQuestColorSpaces();
+     void setupMetaQuestRefreshRates();
+     void setupMetaQuestFoveation();
+ 
+     // Passthrough
++    bool updateFBPassthroughState();  // Manages feature+layer lifecycle, returns true if active
++
+     XrPassthroughFB m_passthroughFeature{XR_NULL_HANDLE};
+     void createMetaQuestPassthrough();
+     void destroyMetaQuestPassthrough();
+@@ -161,6 +190,7 @@ private:
+     void pauseMetaQuestPassthrough();
+ 
+     XrPassthroughLayerFB m_passthroughLayer{XR_NULL_HANDLE};
++    bool m_fbPassthroughActive = false;   // Current XR runtime state, managed by updateFBPassthroughState()
+     void createMetaQuestPassthroughLayer();
+     void destroyMetaQuestPassthroughLayer();
+     void pauseMetaQuestPassthroughLayer();
+@@ -216,7 +246,7 @@ private:
+     int64_t m_depthSwapchainFormat = -1;
+     int m_samples = 1;
+ 
+-    bool m_fbPassthroughEnabled = false;
++    bool m_fbPassthroughEnabled = false;  // Desired state, set by QML via setFBPassthroughEnabled()
+     bool m_multiviewRendering = true;
+     bool m_spaceExtensionSupported = false;
+     QQuick3DXrAnchorManager *m_spaceExtension = nullptr;
+@@ -255,6 +285,56 @@ private:
+ 
+     bool m_waitingForFrame = false;
+     bool m_wantUpdate = false;
++    bool m_renderingFrame = false;
++    bool m_asyncRenderEnabled = false;
++    QMutex m_syncMutex;
++    QWaitCondition m_syncCondition;
++    bool m_syncReady = false;
++
++    // Per-frame data prepared by the main thread and handed off to the
++    // worker thread. This struct is the explicit boundary: the worker
++    // thread may only read from here (plus immutable-after-init members).
++    struct FrameData {
++        XrFrameState frameState{};
++        quint32 viewCountOutput = 0;
++
++        // Snapshot of mutable state captured by main thread so the worker
++        // never reads members that QML could change concurrently.
++        bool multiviewRendering = false;
++        bool fbPassthroughActive = false;
++        bool submitLayerDepth = false;
++        XrEnvironmentBlendMode environmentBlendMode{};
++
++        // Per-eye swapchain images acquired by main thread, used by worker.
++        // Multiview: 1 entry. Non-multiview: viewCountOutput entries.
++        struct EyeSwapchainData {
++            XrSwapchainImageBaseHeader *swapchainImage = nullptr;
++            XrSwapchainImageBaseHeader *depthSwapchainImage = nullptr;
++            bool hasDepthSwapchainImage = false;
++        };
++        QVarLengthArray<EyeSwapchainData, 4> eyeSwapchainData;
++
++        // Working copies of projection layer views and depth infos.
++        // Copied from class members after prepareScene sets pose/fov.
++        // Worker writes .next pointers and depth info fields here only.
++        QVector<XrCompositionLayerProjectionView> projectionLayerViews;
++        QVector<XrCompositionLayerDepthInfoKHR> layerDepthInfos;
++
++        // Composition layers built by main thread, submitted by worker via xrEndFrame.
++        // projLayer.views points to projectionLayerViews.data() above.
++        XrCompositionLayerPassthroughFB passthroughCompLayer{};
++        XrCompositionLayerProjection projLayer{};
++        QVector<XrCompositionLayerBaseHeader*> layers;
++
++        // Pre-computed on main thread so the worker never accesses QObjects
++        // (eyeCamera) for depth submission.
++        struct ViewDepthInfo {
++            float nearZ = 1.0f;
++            float farZ = 10000.0f;
++        };
++        QVarLengthArray<ViewDepthInfo, 4> viewDepthInfos;
++    } m_frameData;
++
+     QQuick3DOpenXRThreadWorker *m_worker = nullptr;
+     QThread *m_workerThread = nullptr;
+     QVector<XrEnvironmentBlendMode> m_blendModes;
+-- 
+2.52.0
+

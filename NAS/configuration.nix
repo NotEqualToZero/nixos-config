@@ -10,12 +10,14 @@
   sources,
   ...
 }:
-
-{
+let
+  quiet = import ../secrets/quiet.nix;
+in {
   imports = [
     "${toString modulesPath}/virtualisation/proxmox-lxc.nix"
     (sources.sops-nix + "/modules/sops")
-    ../nixos/secrets.nix
+    ./remote-builder.nix
+    ../nixos/garagefs.nix
   ];
 
   sops.secrets = {
@@ -23,6 +25,17 @@
     keyid = {};
     accesskey = {};
     restic-passphrase = {};
+    s3-key = {};
+    sync-key = {
+      format = "binary";
+      sopsFile = ../secrets/nas-sync-key.pem;
+      owner = "syncthing";
+    };
+    sync-cert = {
+      format = "binary";
+      sopsFile = ../secrets/nas-sync-cert.pem;
+      owner = "syncthing";
+    };
   };
 
   sops.templates."repositoryfile".content = ''
@@ -33,37 +46,6 @@
     AWS_ACCESS_KEY_ID="${config.sops.placeholder."keyid"}"
     AWS_SECRET_ACCESS_KEY="${config.sops.placeholder."accesskey"}"
   '';
-
-  users.users.admin = {
-    isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" ];
-
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMUgqWiEREHr5rZb3zfLuPf3i+Q8fW00TqHZvDJjcIyG"
-    ];
-
-    # passwordFile needs to be in a volume marked with  `neededForBoot = true`
-    packages = with pkgs; [
-    ];
-  };
-
-  services.openssh = {
-    enable = true;
-    passwordAuthentication = false;
-    # allowSFTP = false; # Don't set this if you need sftp
-    challengeResponseAuthentication = true;
-    extraConfig = ''
-      AllowTcpForwarding yes
-      X11Forwarding no
-      AllowAgentForwarding yes
-      AllowStreamLocalForwarding no
-      AuthenticationMethods publickey
-      '';
-  };
-  nix.settings.trusted-users = [ "admin" ];
-
-
-  security.sudo.wheelNeedsPassword = false;
 
 
   networking = {
@@ -115,8 +97,25 @@
       openFirewall = true;
     };
 
-
+    garage = {
+      enable = true;
+      settings = {
+        data_dir = [
+          { capacity = "5T"; path = "/storage/garage/data"; }
+        ];
+        rpc_public_addr = "[fd7a:115c:a1e0::7135:6604]:3901";
+      };
+    };
   };
+
+  fileSystems."s3fs" = {
+    device = "filesystem";
+    mountPoint = "/s3fs";
+    fsType = "fuse./run/current-system/sw/bin/s3fs";
+    noCheck = true;
+    options = [ "_netdev" "rw" "allow_other" "use_path_request_style" "url=http://localhost:3900" "passwd_file=${config.sops.secrets.s3-key.path}" "umask=0000" "users" "nofail" "exec" "endpoint=garage" ];
+  };
+
 
   services.tailscale = {
     enable = true;
@@ -124,12 +123,17 @@
     openFirewall = true;
   };
 
+  programs.fuse.userAllowOther = true;
+
   environment.systemPackages = with pkgs; [
     tailscale
     ssh-to-age
     nfs-utils
     restic
     ranger
+    s3fs
+    fuse
+    seaweedfs
   ];
 
   services.restic.backups = {
@@ -166,15 +170,20 @@
 
   services.syncthing = {
     enable = true;
+    key = config.sops.secrets.sync-key.path;
+    cert = config.sops.secrets.sync-cert.path;
     user = "syncthing";
     openDefaultPorts = true;
     systemService = true;
-    guiAddress = "0.0.0.0:8385";
+    #guiAddress = "0.0.0.0:8385";
     settings = {
+      devices = {
+        "Paperless" = { id = quiet.syncthing.paperless.id; };
+      };
       folders = {
         "paperless" = {
           path = "/storage/Paperless";
-          #devices = [ "paperless"];
+          devices = [ "Paperless"];
           type = "receiveonly";
           id = "zofgl-49s4j";
         };

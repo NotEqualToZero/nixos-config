@@ -1,16 +1,5 @@
-{ pkgs, sources, config, lib, ... }:
+{ pkgs, config, lib, ... }:
 {
-  imports = [
-    ./secrets.nix
-  ];
-
-  sops.secrets = {
-    tailscale-manage= {};
-   builder-ssh = {
-    format = "binary";
-    sopsFile = ../secrets/remotebuilder/remotebuild;
-   };
-  };
 
   boot.kernelPackages = lib.mkDefault pkgs.linuxPackages_latest;
 
@@ -27,32 +16,11 @@
     ];
   };
 
-  nix.buildMachines = [
-    {
-      hostName = "mnemosyne";
-      systems = [ "x86_64-linux" ];
-      protocol = "ssh-ng";
-      maxJobs = 8;
-      speedFactor = 5;
-      supportedFeatures = [ "nixos-test" "benchmark" "big-parallel" "kvm" ];
-      sshUser = "remotebuild";
-      sshKey = config.sops.secrets.builder-ssh.path;
-    }
-  ];
-#  nix.distributedBuilds = true;
-
-  environment.systemPackages = with pkgs; [
-    busybox
-  ];
-
   services.openssh = {
     enable = true;
-
-    settings = {
-      PasswordAuthentication = false;
+    passwordAuthentication = false;
     # allowSFTP = false; # Don't set this if you need sftp
-      KbdInteractiveAuthentication =  true;
-    };
+    challengeResponseAuthentication = true;
     extraConfig = ''
       AllowTcpForwarding yes
       X11Forwarding no
@@ -94,23 +62,7 @@
   systemd.network.wait-online.enable = false;
   boot.initrd.systemd.network.wait-online.enable = false;
 
-  nix.channel.enable = false;
-  nix.nixPath = [ "nixpkgs=/etc/nixos/nixpkgs" ];
-
-  environment.etc = {
-    "nixos/nixpkgs".source = builtins.storePath pkgs.path;
-  };
-
-  nixpkgs.overlays = [ (final: prev: {
-    inherit (prev.lixPackageSets.stable)
-      nixpkgs-review
-      nix-eval-jobs
-      nix-fast-build;
-      #colmena;
-  }) ];
-
   nix = {
-    package = pkgs.lixPackageSets.stable.lix;
     settings = {
       experimental-features = [
         "nix-command"

@@ -1,0 +1,45 @@
+From 8fc2f7a4c4225fa4435049f2649ba53c2fb2b489 Mon Sep 17 00:00:00 2001
+From: Stanislav Aleksandrov <lightofmysoul@gmail.com>
+Date: Sat, 14 Mar 2026 08:21:55 +0000
+Subject: [PATCH 5/6] XR: OpenXR: add support for
+ XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO
+
+With mono we will draw only 1 image instead of two.
+
+This effectively adds support for 2D XR devices, such as AR Glasses.
+
+Change-Id: I905fa5b150de59523292d734aa0ef964333f601d
+---
+ src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp | 9 ++++++++-
+ 1 file changed, 8 insertions(+), 1 deletion(-)
+
+diff --git a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+index 3908ff86b..46438071b 100644
+--- a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
++++ b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+@@ -1390,7 +1390,6 @@ bool QQuick3DXrManagerPrivate::createSwapchains()
+     qCDebug(lcQuick3DXr, "System Hand Tracking Properties: handTracking=%s",
+            handTrackingSystemProperties.supportsHandTracking == XR_TRUE ? "True" : "False");
+ 
+-           // View Config type has to be Stereo, because OpenXR doesn't support any other mode yet.
+     quint32 viewCount;
+     if (!checkXrResult(xrEnumerateViewConfigurationViews(m_instance,
+                                                          m_systemId,
+@@ -2740,6 +2739,14 @@ void QQuick3DXrManagerPrivate::checkViewConfiguration()
+         }
+         checkEnvironmentBlendMode(viewConfigType);
+     }
++
++    // Select view configuration type based on what the runtime supports.
++    if (!viewConfigTypes.contains(XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO)
++        && viewConfigTypes.contains(XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO)) {
++        m_viewConfigType = XR_VIEW_CONFIGURATION_TYPE_PRIMARY_MONO;
++        m_multiviewRendering = false;
++        qCDebug(lcQuick3DXr, "Mono view mode selected (only mode supported by runtime)");
++    }
+ }
+ 
+ bool QQuick3DXrManagerPrivate::checkXrResult(const XrResult &result)
+-- 
+2.52.0
+

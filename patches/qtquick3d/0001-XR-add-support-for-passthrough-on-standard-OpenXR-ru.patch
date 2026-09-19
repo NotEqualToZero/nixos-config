@@ -1,0 +1,266 @@
+From 5fea58cd9702e44935809e8c135fd3da394ebf80 Mon Sep 17 00:00:00 2001
+From: Stanislav Aleksandrov <lightofmysoul@gmail.com>
+Date: Wed, 21 Jan 2026 07:43:22 +0000
+Subject: [PATCH 1/6] XR: add support for passthrough on standard OpenXR
+ runtimes
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Extends XrView properties "passthroughEnabled" and
+"passthroughSupported". Uses one of standard environment blend modes if
+XR_FB_passthrough extension is not supported.
+
+If the headset does not support opaque blend mode, then
+passthrough will always be enabled
+
+Pick-to: 6.11
+Change-Id: I42cf4fcdd60a43ed9a044de1a0d4aa3ca65cdc3d
+Reviewed-by: Christian Strømme <christian.stromme@qt.io>
+---
+ .../openxr/qquick3dxrmanager_openxr.cpp       | 111 ++++++++++++------
+ .../openxr/qquick3dxrmanager_openxr_p.h       |  12 +-
+ src/xr/quick3dxr/qquick3dxrview.cpp           |   6 +-
+ 3 files changed, 89 insertions(+), 40 deletions(-)
+
+diff --git a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+index 8319bc244..02269153d 100644
+--- a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
++++ b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+@@ -279,7 +279,13 @@ void QQuick3DXrManagerPrivate::updateCameraMultiview(int projectionLayerViewStar
+     vrViewport->setMultiViewCameras(cameras.data(), cameras.count());
+ }
+ 
+-bool QQuick3DXrManagerPrivate::supportsPassthrough() const
++bool QQuick3DXrManagerPrivate::supportsTransparentBlendMode() const
++{
++    return m_blendModes.contains(XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND)
++        || m_blendModes.contains(XR_ENVIRONMENT_BLEND_MODE_ADDITIVE);
++}
++
++bool QQuick3DXrManagerPrivate::supportsFBPassthrough() const
+ {
+     bool supported = false;
+     XrSystemPassthroughProperties2FB passthroughSystemProperties{};
+@@ -313,6 +319,13 @@ bool QQuick3DXrManagerPrivate::supportsPassthrough() const
+     return supported;
+ }
+ 
++bool QQuick3DXrManagerPrivate::supportsPassthrough() const
++{
++    // Passthrough is supported if either XR_FB_passthrough extension is available
++    // or if transparent blend modes (ALPHA_BLEND/ADDITIVE) are supported
++    return supportsFBPassthrough() || supportsTransparentBlendMode();
++}
++
+ void QQuick3DXrManagerPrivate::setupWindow(QQuickWindow *window)
+ {
+     QSSG_ASSERT(window != nullptr, return);
+@@ -427,7 +440,7 @@ void QQuick3DXrManagerPrivate::doRenderFrameAferWait(const XrFrameState &frameSt
+ 
+     XrCompositionLayerPassthroughFB passthroughCompLayer{};
+     passthroughCompLayer.type = XR_TYPE_COMPOSITION_LAYER_PASSTHROUGH_FB;
+-    if (m_enablePassthrough && m_passthroughSupported) {
++    if (m_fbPassthroughEnabled) {
+         if (m_passthroughLayer == XR_NULL_HANDLE)
+             createMetaQuestPassthroughLayer();
+         passthroughCompLayer.layerHandle = m_passthroughLayer;
+@@ -451,7 +464,7 @@ void QQuick3DXrManagerPrivate::doRenderFrameAferWait(const XrFrameState &frameSt
+     XrFrameEndInfo frameEndInfo{};
+     frameEndInfo.type = XR_TYPE_FRAME_END_INFO;
+     frameEndInfo.displayTime = frameState.predictedDisplayTime;
+-    if (!m_enablePassthrough)
++    if (!m_fbPassthroughEnabled)
+         frameEndInfo.environmentBlendMode = m_environmentBlendMode;
+     else
+         frameEndInfo.environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
+@@ -1275,32 +1288,65 @@ void QQuick3DXrManagerPrivate::setMultiViewRenderingEnabled(bool enable)
+     }
+ }
+ 
+-bool QQuick3DXrManagerPrivate::setPassthroughEnabled(bool enable)
++bool QQuick3DXrManagerPrivate::isPassthroughEnabled() const
+ {
+-    m_passthroughSupported = supportsPassthrough();
++    // FB passthrough is enabled
++    if (m_fbPassthroughEnabled)
++        return true;
+ 
+-    if (m_passthroughSupported) {
+-        m_enablePassthrough = enable;
+-        if (m_enablePassthrough) {
+-            if (m_passthroughFeature == XR_NULL_HANDLE)
+-                createMetaQuestPassthrough(); // Create and start
+-            else
+-                startMetaQuestPassthrough(); // Existed, but not started
++    // Blend mode passthrough is enabled (ALPHA_BLEND or ADDITIVE)
++    return m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND
++        || m_environmentBlendMode == XR_ENVIRONMENT_BLEND_MODE_ADDITIVE;
++}
+ 
+-            if (m_passthroughLayer == XR_NULL_HANDLE)
+-                createMetaQuestPassthroughLayer(); // Create
+-            else
+-                resumeMetaQuestPassthroughLayer(); // Exist, but not started
+-        } else {
+-            // Don't destroy, just pause
+-            if (m_passthroughLayer)
+-                pauseMetaQuestPassthroughLayer();
++void QQuick3DXrManagerPrivate::setFBPassthroughEnabled(bool enable)
++{
++    m_fbPassthroughEnabled = enable;
++    if (enable) {
++        if (m_passthroughFeature == XR_NULL_HANDLE)
++            createMetaQuestPassthrough();
++        else
++            startMetaQuestPassthrough();
+ 
+-            if (m_passthroughFeature)
+-                pauseMetaQuestPassthrough();
+-        }
++        if (m_passthroughLayer == XR_NULL_HANDLE)
++            createMetaQuestPassthroughLayer();
++        else
++            resumeMetaQuestPassthroughLayer();
++    } else {
++        if (m_passthroughLayer)
++            pauseMetaQuestPassthroughLayer();
++        if (m_passthroughFeature)
++            pauseMetaQuestPassthrough();
++    }
++}
++
++bool QQuick3DXrManagerPrivate::setTransparentBlendMode(bool enable)
++{
++    if (enable) {
++        if (m_blendModes.contains(XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND))
++            m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_ALPHA_BLEND;
++        else if (m_blendModes.contains(XR_ENVIRONMENT_BLEND_MODE_ADDITIVE))
++            m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_ADDITIVE;
++        else
++            return false;
++    } else {
++        if (m_blendModes.contains(XR_ENVIRONMENT_BLEND_MODE_OPAQUE))
++            m_environmentBlendMode = XR_ENVIRONMENT_BLEND_MODE_OPAQUE;
++        else
++            return false;
+     }
+-    return m_passthroughSupported;
++    qCDebug(lcQuick3DXr, "Environment blend mode set to: %s", to_string(m_environmentBlendMode));
++    return true;
++}
++
++bool QQuick3DXrManagerPrivate::setPassthroughEnabled(bool enable)
++{
++    if (supportsFBPassthrough()) {
++        setFBPassthroughEnabled(enable);
++        return true;
++    }
++
++    return setTransparentBlendMode(enable);
+ }
+ 
+ void QQuick3DXrManagerPrivate::setDepthSubmissionEnabled(bool enable)
+@@ -1874,7 +1920,7 @@ void QQuick3DXrManagerPrivate::createMetaQuestPassthrough()
+     // According to the validation layer 'flags' cannot be 0, thus we make sure
+     // this function is only ever called when we know passthrough is actually
+     // enabled by the app.
+-    Q_ASSERT(m_passthroughSupported && m_enablePassthrough);
++    Q_ASSERT(m_fbPassthroughEnabled);
+ 
+     PFN_xrCreatePassthroughFB pfnXrCreatePassthroughFBX = nullptr;
+     OpenXRHelpers::resolveXrFunction(m_instance, "xrCreatePassthroughFB", (PFN_xrVoidFunction*)(&pfnXrCreatePassthroughFBX));
+@@ -1929,7 +1975,7 @@ void QQuick3DXrManagerPrivate::createMetaQuestPassthroughLayer()
+     layerCreateInfo.type = XR_TYPE_PASSTHROUGH_LAYER_CREATE_INFO_FB;
+     layerCreateInfo.passthrough = m_passthroughFeature;
+     layerCreateInfo.purpose = XR_PASSTHROUGH_LAYER_PURPOSE_RECONSTRUCTION_FB;
+-    if (m_enablePassthrough)
++    if (m_fbPassthroughEnabled)
+         layerCreateInfo.flags = XR_PASSTHROUGH_IS_RUNNING_AT_CREATION_BIT_FB;
+ 
+     XrResult xrCreatePassthroughLayerFBXResult = OpenXRHelpers::safeCall(pfnXrCreatePassthroughLayerFBX, m_session, static_cast<const XrPassthroughLayerCreateInfoFB*>(&layerCreateInfo), &m_passthroughLayer);
+@@ -2421,14 +2467,11 @@ void QQuick3DXrManagerPrivate::checkEnvironmentBlendMode(XrViewConfigurationType
+         return;
+     }
+ 
+-    bool blendModeFound = false;
+-    for (XrEnvironmentBlendMode mode : blendModes) {
+-        const bool blendModeMatch = (mode == m_environmentBlendMode);
+-        qCDebug(lcQuick3DXr, "Environment Blend Mode (%s) : %s", to_string(mode), blendModeMatch ? "(Selected)" : "");
+-        blendModeFound |= blendModeMatch;
+-    }
+-    if (!blendModeFound)
+-        qWarning("No matching environment blend mode found");
++    m_blendModes = blendModes;
++
++    // Set initial blend mode, prefer opaque (passthrough disabled)
++    if (!setTransparentBlendMode(false))
++        setTransparentBlendMode(true);
+ }
+ 
+ QT_END_NAMESPACE
+diff --git a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
+index 677c8ea3b..5ca1323c3 100644
+--- a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
++++ b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
+@@ -53,6 +53,8 @@ public:
+     static QQuick3DXrManagerPrivate *get(QQuick3DXrManager *manager);
+ 
+     [[nodiscard]] bool supportsPassthrough() const;
++    bool supportsTransparentBlendMode() const;
++    bool supportsFBPassthrough() const;
+ 
+     bool isValid() const { return m_graphics != nullptr; }
+ 
+@@ -81,7 +83,10 @@ public:
+     bool isMultiViewRenderingEnabled() const { return m_multiviewRendering; }
+ 
+     [[nodiscard]] bool setPassthroughEnabled(bool enable);
+-    bool isPassthroughEnabled() const { return m_enablePassthrough; }
++    bool isPassthroughEnabled() const;
++
++    void setFBPassthroughEnabled(bool enable);
++    bool setTransparentBlendMode(bool enable);
+ 
+     void setDepthSubmissionEnabled(bool enable);
+     bool isDepthSubmissionEnabled() const { return m_compositionLayerDepthSupported && m_submitLayerDepth; }
+@@ -211,9 +216,7 @@ private:
+     int64_t m_depthSwapchainFormat = -1;
+     int m_samples = 1;
+ 
+-    bool m_passThroughEnabled = false;
+-    bool m_passthroughSupported = false;
+-    bool m_enablePassthrough = false;
++    bool m_fbPassthroughEnabled = false;
+     bool m_multiviewRendering = true;
+     bool m_spaceExtensionSupported = false;
+     QQuick3DXrAnchorManager *m_spaceExtension = nullptr;
+@@ -253,6 +256,7 @@ private:
+     bool m_wantUpdate = false;
+     QQuick3DOpenXRThreadWorker *m_worker = nullptr;
+     QThread *m_workerThread = nullptr;
++    QVector<XrEnvironmentBlendMode> m_blendModes;
+ };
+ 
+ QT_END_NAMESPACE
+diff --git a/src/xr/quick3dxr/qquick3dxrview.cpp b/src/xr/quick3dxr/qquick3dxrview.cpp
+index 8a7d3d01d..1a2a4c319 100644
+--- a/src/xr/quick3dxr/qquick3dxrview.cpp
++++ b/src/xr/quick3dxr/qquick3dxrview.cpp
+@@ -163,9 +163,11 @@ void QQuick3DXrView::setPassthroughEnabled(bool enable)
+     }
+ 
+     const bool orgPassthroughEnabled = m_xrManager.isPassthroughEnabled();
+-    // bail if passthrough is not supported
+     if (!m_xrManager.setPassthroughEnabled(enable)) {
+-        qWarning("Enabling Passthrough is not supported.");
++        if (enable)
++            qWarning("Enabling passthrough is not supported.");
++        else
++            qWarning("Disabling passthrough is not supported.");
+         return;
+     }
+ 
+-- 
+2.52.0
+

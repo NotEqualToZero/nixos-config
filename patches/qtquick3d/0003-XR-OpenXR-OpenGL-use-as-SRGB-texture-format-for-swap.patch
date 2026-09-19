@@ -1,0 +1,40 @@
+From 562c8658471a0c20df594a8b99eacc2d54005bca Mon Sep 17 00:00:00 2001
+From: Stanislav Aleksandrov <lightofmysoul@gmail.com>
+Date: Fri, 17 Oct 2025 04:31:12 +0000
+Subject: [PATCH 3/6] XR: OpenXR: OpenGL: use as SRGB texture format for
+ swapchain
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+Try to create OpenGL swapchain with GL_SRGB8_ALPHA8_EXT textures first
+instead of GL_RGBA8. This fixes wrong colors, because Qt Quick 3D
+renders its contents with tone mapping by default.
+
+Fixes: QTBUG-141224
+Change-Id: I855c7b83ae29a8ef23359e5ea2ed95989ca5e114
+Reviewed-by: Christian Strømme <christian.stromme@qt.io>
+Reviewed-by: Elias Hautala <Elias.Hautala@qt.io>
+---
+ src/xr/quick3dxr/openxr/qopenxrgraphics_opengl.cpp | 5 +----
+ 1 file changed, 1 insertion(+), 4 deletions(-)
+
+diff --git a/src/xr/quick3dxr/openxr/qopenxrgraphics_opengl.cpp b/src/xr/quick3dxr/openxr/qopenxrgraphics_opengl.cpp
+index 706685c28..0d18ad66d 100644
+--- a/src/xr/quick3dxr/openxr/qopenxrgraphics_opengl.cpp
++++ b/src/xr/quick3dxr/openxr/qopenxrgraphics_opengl.cpp
+@@ -252,10 +252,7 @@ bool QOpenXRGraphicsOpenGL::finializeGraphics(QRhi *rhi)
+ int64_t QOpenXRGraphicsOpenGL::colorSwapchainFormat(const QVector<int64_t> &swapchainFormats) const
+ {
+     // List of supported color swapchain formats.
+-    constexpr int64_t supportedColorSwapchainFormats[] = {
+-        GL_RGBA8,
+-        GL_RGBA8_SNORM
+-    };
++    constexpr int64_t supportedColorSwapchainFormats[] = { GL_SRGB8_ALPHA8_EXT, GL_RGBA8, GL_RGBA8_SNORM };
+ 
+     auto swapchainFormatIt = std::find_first_of(std::begin(supportedColorSwapchainFormats),
+                                                 std::end(supportedColorSwapchainFormats),
+-- 
+2.52.0
+

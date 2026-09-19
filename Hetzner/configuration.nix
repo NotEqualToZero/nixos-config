@@ -10,47 +10,34 @@
 {
   imports = [
     ./hardware-configuration.nix
-    ../secrets/hetzner-networking.nix # generated at runtime by nixos-infect
-    (sources.sops-nix + "/modules/sops")
+    ./networking.nix # generated at runtime by nixos-infect
+    ../nixos/garagefs.nix
+  ];
+
+  environment.systemPackages = with pkgs; [
+    seaweedfs
   ];
 
   sops.secrets = {
     tailscale-manage= {};
   };
 
-  users.users.admin = {
-    isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" ];
-
-    openssh.authorizedKeys.keys = [
-      "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIMUgqWiEREHr5rZb3zfLuPf3i+Q8fW00TqHZvDJjcIyG"
-    ];
-
-    # passwordFile needs to be in a volume marked with  `neededForBoot = true`
-    packages = with pkgs; [
-    ];
-  };
-
-  services.openssh = {
+  services.garage = {
     enable = true;
-    passwordAuthentication = false;
-    # allowSFTP = false; # Don't set this if you need sftp
-    challengeResponseAuthentication = true;
-    extraConfig = ''
-      AllowTcpForwarding yes
-      X11Forwarding no
-      AllowAgentForwarding yes
-      AllowStreamLocalForwarding no
-      AuthenticationMethods publickey
-      '';
+    settings = {
+      data_dir = [
+        { capacity = "1G"; path = "/var/lib/garage/data"; }
+      ];
+      rpc_public_addr = "100.66.187.64:3901";
+    };
   };
-  nix.settings.trusted-users = [ "admin" ];
-
-
-  security.sudo.wheelNeedsPassword = false;
 
   services.tailscale = {
     enable = true;
+    useRoutingFeatures = "server";
+    extraSetFlags = [
+      "--advertise-exit-node"
+    ];
     # Enable tailscale at startup
 
     # If you would like to use a preauthorized key

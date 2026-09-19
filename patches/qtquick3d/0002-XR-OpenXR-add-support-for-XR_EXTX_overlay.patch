@@ -1,0 +1,76 @@
+From dd39ca27e09f87a0558e9f544c7a441e58708994 Mon Sep 17 00:00:00 2001
+From: Stanislav Aleksandrov <lightofmysoul@gmail.com>
+Date: Sat, 10 Jan 2026 00:05:55 +0000
+Subject: [PATCH 2/6] XR: OpenXR: add support for XR_EXTX_overlay
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+XR_EXTX_overlay extension allows OpenXR applications to be rendered
+on top of other OpenXR applications. Transparency is also applied.
+
+Uses the environment variable QT_QUICK3D_XR_OVERLAY_PLACEMENT.
+A positive number will activate the extension and will be
+used as OverlayPlacement parameter.
+
+Pick-to: 6.11
+Change-Id: I9bf4ec8aed376c056768952b95e9b2d5903a0e63
+Reviewed-by: Christian Strømme <christian.stromme@qt.io>
+---
+ .../openxr/qquick3dxrmanager_openxr.cpp        | 18 +++++++++++++++++-
+ .../openxr/qquick3dxrmanager_openxr_p.h        |  1 +
+ 2 files changed, 18 insertions(+), 1 deletion(-)
+
+diff --git a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+index 02269153d..923af1996 100644
+--- a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
++++ b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr.cpp
+@@ -614,9 +614,20 @@ bool QQuick3DXrManagerPrivate::initialize()
+     // Create Session
+     XrSessionCreateInfo xrSessionInfo{};
+     xrSessionInfo.type = XR_TYPE_SESSION_CREATE_INFO;
+-    xrSessionInfo.next = m_graphics->handle();
+     xrSessionInfo.systemId = m_systemId;
+ 
++    auto overlayLayerPlacement = qEnvironmentVariableIntValue("QT_QUICK3D_XR_OVERLAY_PLACEMENT");
++    if (m_overlayExtensionSupported && overlayLayerPlacement > 0) {
++        XrSessionCreateInfoOverlayEXTX overlayInfo {};
++        overlayInfo.type = XR_TYPE_SESSION_CREATE_INFO_OVERLAY_EXTX;
++        overlayInfo.sessionLayersPlacement = overlayLayerPlacement;
++        overlayInfo.next = m_graphics->handle();
++        xrSessionInfo.next = &overlayInfo;
++        qCDebug(lcQuick3DXr, "requesting overlay placement: %d", overlayLayerPlacement);
++    } else {
++        xrSessionInfo.next = m_graphics->handle();
++    }
++
+     result = xrCreateSession(m_instance, &xrSessionInfo, &m_session);
+     if (result != XR_SUCCESS) {
+         setErrorString(result, "xrCreateSession");
+@@ -2224,6 +2235,11 @@ XrResult QQuick3DXrManagerPrivate::createXrInstance()
+             enabledExtensions.append(requiredExtensions);
+     }
+ 
++    if (isExtensionSupported(XR_EXTX_OVERLAY_EXTENSION_NAME, extensionProperties)) {
++        m_overlayExtensionSupported = true;
++        enabledExtensions.append(XR_EXTX_OVERLAY_EXTENSION_NAME);
++    }
++
+ #ifdef Q_OS_ANDROID
+     if (isExtensionSupported(XR_KHR_ANDROID_THREAD_SETTINGS_EXTENSION_NAME, extensionProperties))
+         enabledExtensions.append(XR_KHR_ANDROID_THREAD_SETTINGS_EXTENSION_NAME);
+diff --git a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
+index 5ca1323c3..b16685cb3 100644
+--- a/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
++++ b/src/xr/quick3dxr/openxr/qquick3dxrmanager_openxr_p.h
+@@ -231,6 +231,7 @@ private:
+     bool m_submitLayerDepth = false;
+     bool m_handtrackingExtensionSupported = false;
+     bool m_handtrackingAimExtensionSupported = false;
++    bool m_overlayExtensionSupported = false;
+     bool m_isGraphicsInitialized = false;
+ 
+     bool m_sessionRunning{false};
+-- 
+2.52.0
+
