@@ -33,6 +33,7 @@ in {
         wget npins tmux git
       ];
 
+      fonts.enableDefaultPackages = true;
 
     };
 

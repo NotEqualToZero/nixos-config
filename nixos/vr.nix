@@ -20,7 +20,7 @@ let
 in {
   services.monado = {
     enable = true;
-    defaultRuntime = true; # Register as default OpenXR runtime
+    defaultRuntime = false; # Register as default OpenXR runtime
     # package = pkgs.monado.overrideAttrs (finalAttrs: previousAttrs: { src = sources.monado.outPath; patches = []; }); #rayneo driver fork
   };
   systemd.user.services.monado.environment = {

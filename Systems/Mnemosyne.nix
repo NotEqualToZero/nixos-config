@@ -34,6 +34,12 @@ in
 
   nixpkgs.config.permittedInsecurePackages = [ "immich-2.7.5" ]; # Remove on update to 26.11 https://github.com/NixOS/nixpkgs/commit/e0b4f1c50c47509999e09ab617fb56785d6218a9
 
+  fonts.packages = with pkgs; [
+    noto-fonts
+    noto-fonts-cjk-sans
+    noto-fonts-color-emoji
+  ] ++ builtins.filter lib.attrsets.isDerivation (builtins.attrValues pkgs.nerd-fonts);
+
   sops.secrets = {
     searxng-key = {};
   };
