@@ -21,7 +21,18 @@ in {
 
   environment.systemPackages = with pkgs; [
     kdePackages.plasma-bigscreen
+    beets
+    ranger
+    rsync
   ];
+
+  users.users.ash = {
+    isNormalUser = true;
+  };
+
+  users.users.viewer = {
+    isNormalUser = true;
+  };
 
   services.displayManager = {
     defaultSession = "plasma-bigscreen-wayland";
@@ -33,7 +44,7 @@ in {
       settings = {
         Autologin = {
 #          Session = "plasma.desktop";
-          User = "ash";
+          User = "viewer";
         };
       };
     };
@@ -106,9 +117,6 @@ in {
     ];
   };
 
-  users.users.ash = {
-    isNormalUser = true;
-  };
 
 #  services.garage = {
 #    enable = true;

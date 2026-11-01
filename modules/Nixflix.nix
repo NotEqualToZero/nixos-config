@@ -31,7 +31,7 @@
   };
 
   services.transmission = {
-    enable = true;
+    enable = false;
     group = "media";
     settings = {
       umask = "002";
@@ -52,8 +52,8 @@
 
   nixflix = {
     enable = true;
-    mediaDir = "/mnt/storage/media";
-    stateDir = "/mnt/storage/mediadata";
+    mediaDir = "/mnt/storage/nixflix";
+    stateDir = "/mnt/storage/.statenixflix";
     mediaUsers = [ "media" ];
 
     nginx = {
@@ -144,7 +144,7 @@
     };
 
     seerr = {
-      enable = true;
+      enable = false;
       apiKey._secret = config.sops.secrets.seerr-api.path;
     };
 
@@ -164,7 +164,7 @@
         password = {_secret = config.sops.secrets.jelly-pass.path;};
       };
       users.Ash = {
-        policy.isAdministrator = true;
+        policy.isAdministrator = false;
         password = "";
       };
     };
