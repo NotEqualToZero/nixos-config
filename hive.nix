@@ -171,4 +171,17 @@ in {
     };
     services.tailscale.enable = true;
   };
+
+  porta-macs = { name, nodes, ... }: {
+    imports = [
+      ./Systems/porta-macs/configuration.nix
+    ];
+
+    deployment = {
+      targetHost = "porta-macs";
+      targetUser = "admin";
+    };
+
+    services.tailscale.enable = true;
+  };
 }

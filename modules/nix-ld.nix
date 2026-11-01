@@ -65,7 +65,6 @@
       libXi
       libSM
       libICE
-      gnome2.GConf
       nspr
       nss
       cups
@@ -90,8 +89,8 @@
       # other issue: (Unity:377230): GLib-GIO-CRITICAL **: 21:09:04.706: g_dbus_proxy_call_sync_internal: assertion 'G_IS_DBUS_PROXY (proxy)' failed
 
       # Verified games requirements
-      xorg.libXt
-      xorg.libXmu
+      libXt
+      libXmu
       libogg
       libvorbis
       SDL
@@ -117,9 +116,6 @@
       SDL_mixer
       SDL2_ttf
       SDL2_mixer
-      libappindicator-gtk2
-      libdbusmenu-gtk2
-      libindicator-gtk2
       libcaca
       libcanberra
       libgcrypt

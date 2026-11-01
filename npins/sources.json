@@ -141,16 +141,16 @@
       },
       "branch": "main",
       "submodules": false,
-      "revision": "78fe4493e39f3f4099eea678a0ca572ece6039b5",
-      "url": "https://github.com/kiriwalawren/nixflix/archive/78fe4493e39f3f4099eea678a0ca572ece6039b5.tar.gz",
-      "hash": "sha256-JvzVC7w9OVdra26bp+CYLoo8XlWyLHacs1lPK7CuFyM="
+      "revision": "cc110d5f838bd96a7eb2cabe6a67ac4b490317e7",
+      "url": "https://github.com/kiriwalawren/nixflix/archive/cc110d5f838bd96a7eb2cabe6a67ac4b490317e7.tar.gz",
+      "hash": "sha256-oE2g7bMkpSF7WsPqKOapL95poEQ3m8OHD3rVEey4jAQ="
     },
     "nixos-26.05": {
       "type": "Channel",
       "name": "nixos-26.05",
       "artifact": "nixexprs.tar.xz",
-      "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.9989.ecc58f32d106/nixexprs.tar.xz",
-      "hash": "sha256-a0J/BOBKhTv1G1v10+KTda4z88xdsPB1tw/kwAFLfCc="
+      "url": "https://releases.nixos.org/nixos/26.05/nixos-26.05.12707.718f670e8453/nixexprs.tar.xz",
+      "hash": "sha256-b5F1sFDgU/kyvmlntbK77aB9KAQn2z4E07Wz20ZVnPM="
     },
     "nixos-hardware": {
       "type": "Git",
@@ -221,8 +221,8 @@
       "type": "Channel",
       "name": "nixos-unstable",
       "artifact": "nixexprs.tar.xz",
-      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.11pre1075591.e554fab72f81/nixexprs.tar.xz",
-      "hash": "sha256-TAKa57gfBM/9a4IZrFaIQZhnHs9mXIFPlZbYrvhnaMY="
+      "url": "https://releases.nixos.org/nixos/unstable/nixos-26.11pre1103272.31ecbaca1bde/nixexprs.tar.xz",
+      "hash": "sha256-yXRSdZdZZqccEL+j11lc1gFG1f7V5j8N7oPBTHwf7n4="
     },
     "sops-nix": {
       "type": "Git",

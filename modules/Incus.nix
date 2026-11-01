@@ -1,8 +1,21 @@
 { config, lib, pkgs, ... }:
 
 {
+  boot.kernel.sysctl = { # ip forwarding for tailscale incus connection
+    "net.ipv4.conf.all.forwarding" = true;
+    "net.ipv6.conf.all.forwarding" = true;
+  };
+
+  services.tailscale = {
+    useRoutingFeatures = "both";
+    extraSetFlags = [
+      #"--advertise-routes=${}"
+    ];
+  };
+
   virtualisation.incus = {
     enable = true;
+    ui.enable = true;
     preseed = {
        networks = [
          {

@@ -39,7 +39,7 @@
       sshKey = config.sops.secrets.builder-ssh.path;
     }
   ];
-#  nix.distributedBuilds = true;
+  nix.distributedBuilds = true;
 
   environment.systemPackages = with pkgs; [
     busybox
@@ -67,6 +67,9 @@
   services.tailscale = {
     enable = lib.mkDefault false;
     openFirewall = true;
+    extraSetFlags = [
+      "--accept-routes"
+    ];
     # Enable tailscale at startup
 
     # If you would like to use a preauthorized key
