@@ -28,6 +28,7 @@ in {
 
   users.users.ash = {
     isNormalUser = true;
+    extraGroups = [ "media" ];
   };
 
   users.users.viewer = {
